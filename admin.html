@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrace - Půjčovna</title>
+
+<style>
+:root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --dark: #0f172a;
+    --gray: #64748b;
+    --light: #f8fafc;
+    --border: #e2e8f0;
+    --success: #16a34a;
+    --danger: #dc2626;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--light);
+    color: var(--dark);
+    line-height: 1.6;
+    padding: 20px 10px;
+    display: flex;
+    justify-content: center;
+}
+.wrapper { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+.app-header { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+.app-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--dark); }
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border: 1px solid var(--border);
+}
+.section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--dark); }
+.form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+.btn {
+    background-color: var(--primary); color: white; border: none; border-radius: 8px; padding: 12px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;
+}
+.btn:hover { background-color: var(--primary-dark); }
+.btn-danger { background-color: var(--danger); }
+.btn-danger:hover { background-color: #b91c1c; }
+.btn-secondary { background-color: var(--gray); }
+.admin-product-item {
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.admin-product-item img { width: 50px; height: 50px; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 6px; flex-shrink: 0; }
+.admin-product-info { flex: 1; }
+.admin-product-title { font-weight: 700; font-size: 0.95rem; }
+.admin-product-details { font-size: 0.8rem; color: var(--gray); }
+.admin-actions { display: flex; gap: 8px; align-items: center; }
+.action-link { font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; }
+.action-link:hover { text-decoration: underline; }
+.action-link-danger { color: var(--danger); }
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+
+<div class="app-header">
+    <h1>Administrace půjčovny</h1>
+    <a href="index.html" class="action-link" style="font-size: 0.9rem;">← Zpět na web</a>
+</div>
+
+<!-- Přidání nového stroje -->
+<div class="card">
+    <div class="section-title">Přidat nový stroj do nabídky</div>
+    <form onsubmit="addNewProduct(event)">
+        <div class="form-group">
+            <label>Název stroje</label>
+            <input type="text" id="new-name" placeholder="např. Televize" required>
+        </div>
+        <div class="form-group">
+            <label>Popis stroje</label>
+            <textarea id="new-desc" placeholder="Krátký popis..." rows="2"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Cena za den (Kč)</label>
+                <input type="number" id="new-price" placeholder="např. 300" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Výše zálohy (Kč)</label>
+                <input type="number" id="new-deposit" placeholder="např. 3000" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Počet kusů skladem</label>
+                <input type="number" id="new-stock" placeholder="např. 5" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Fotografie stroje (vyberte obrázek)</label>
+            <input type="file" id="new-img" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn">Uložit do nabídky</button>
+    </form>
+</div>
+
+<!-- Seznam existujících strojů -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div class="section-title" style="margin-bottom: 0;">Seznam existujících strojů v nabídce</div>
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="clearAllDataItems()">Smazat vše</button>
+            <button type="button" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="resetToDefaults()">Obnovit výchozí</button>
+        </div>
+    </div>
+    <div id="admin-products-list"></div>
+</div>
+
+</div>
+
+<!-- Skrytý input pro změnu fotky u existující položky -->
+<input type="file" id="hidden-file-input" style="display:none;" accept="image/*" onchange="handleImageChange(this)">
+
+<script>
+const defaultProducts = [
+    { id: 1, name: "AKU VRTAČKA", price: 300, deposit: 3000, stock: 5, img: "vrtacka.png", desc: "Výkonná AKU vrtačka vhodná pro veškeré vrtací a šroubovací práce." },
+    { id: 2, name: "MOTOROVÁ PILA", price: 350, deposit: 3000, stock: 3, img: "motorova-pila.png", desc: "Spolehlivá řetězová pila pro kácení stromů a tesařské práce." },
+    { id: 3, name: "ZAHRADNÍ DRTIČ", price: 350, deposit: 3000, stock: 2, img: "zahradni-drtic.png", desc: "Kvalitní drtič větví a zahradního odpadu." },
+    { id: 4, name: "VIBRAČNÍ DESKA", price: 350, deposit: 3000, stock: 1, img: "vibracni-deska.png", desc: "Vibrační deska pro zhutňování zeminy a zámkové dlažby." },
+    { id: 5, name: "ÚHLOVÁ BRUSKA", price: 350, deposit: 3000, stock: 4, img: "uhlova-bruska.png", desc: "Univerzální úhlová bruska na řezání a broušení." },
+    { id: 6, name: "BOURACÍ KLADIVO", price: 500, deposit: 3000, stock: 2, img: "bouraci-kladivo.png", desc: "Vysoký bourací výkon pro demolici betonových konstrukcí." },
+    { id: 7, name: "ELEKTROCENTRÁLA", price: 500, deposit: 3000, stock: 2, img: "elektrocentrala.png", desc: "Záložní generátor elektrického proudu." },
+    { id: 8, name: "TEPOVAČ", price: 500, deposit: 3000, stock: 6, img: "tepovac.png", desc: "Profesionální čistič koberců a čalounění." },
+    { id: 9, name: "PRŮMYSLOVÝ VYSAVAČ", price: 300, deposit: 1500, stock: 4, img: "prumyslovy-vysavac.png", desc: "Vysavač pro mokré i suché vysávání." },
+    { id: 10, name: "LASEROVÝ NIVELÁTOR", price: 300, deposit: 1500, stock: 2, img: "laserovy-nivelator.png", desc: "Rotační laser pro přesné zaměřování rovin." },
+    { id: 11, name: "STOLNÍ PILA", price: 400, deposit: 2000, stock: 1, img: "stolni-pila.png", desc: "Přesná stolní pila s vodním chlazením." },
+    { id: 13, name: "ODVLHČOVAČ", price: 300, deposit: 1500, stock: 3, img: "odvlhcovac.png", desc: "Vysokokapacitní odvlhčovač vzduchu." }
+];
+
+let rawData = JSON.parse(localStorage.getItem('pujcovna_data')) || defaultProducts;
+let products = rawData.map(p => ({
+    id: p.id,
+    name: p.name || p.nazev || "Neznámý stroj",
+    price: p.price !== undefined ? p.price : (p.cenaZaDen || 0),
+    deposit: p.deposit !== undefined ? p.deposit : 0,
+    stock: p.stock !== undefined ? p.stock : (p.sklad || 0),
+    img: p.img || p.obrazek || "",
+    desc: p.desc || ""
+}));
+
+let activeEditingId = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderAdminList();
+});
+
+function saveAndSync() {
+    try {
+        localStorage.setItem('pujcovna_data', JSON.stringify(products));
+    } catch (e) {
+        alert("Chyba: Úložiště je plné. Zvolte menší obrázek.");
+    }
+}
+
+function renderAdminList() {
+    const list = document.getElementById("admin-products-list");
+    if (!products.length) {
+        list.innerHTML = `<p style="color:var(--gray); font-size:0.9rem;">Žádné stroje v nabídce.</p>`;
+        return;
+    }
+
+    list.innerHTML = products.map(p => `
+        <div class="admin-product-item">
+            <img src="${p.img}" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22%23999%22>Foto</text></svg>'">
+            <div class="admin-product-info">
+                <div class="admin-product-title">${p.name}</div>
+                <div class="admin-product-details">${p.price} Kč/den | Záloha: ${p.deposit} Kč | Skladem: ${p.stock} ks</div>
+            </div>
+            <div class="admin-actions">
+                <span class="action-link" onclick="triggerImageUpload(${p.id})">Změnit foto</span>
+                <span class="action-link action-link-danger" onclick="deleteProduct(${p.id})">Smazat</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addNewProduct(e) {
+    e.preventDefault();
+    const name = document.getElementById("new-name").value.trim();
+    const desc = document.getElementById("new-desc").value.trim();
+    const price = parseInt(document.getElementById("new-price").value) || 0;
+    const deposit = parseInt(document.getElementById("new-deposit").value) || 0;
+    const stock = parseInt(document.getElementById("new-stock").value) || 0;
+    const fileInput = document.getElementById("new-img");
+    
+    if (!fileInput.files || !fileInput.files[0]) {
+        alert("Prosím vyberte fotografii stroje.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+        products.push({
+            id: newId,
+            name: name,
+            price: price,
+            deposit: deposit,
+            stock: stock,
+            img: evt.target.result,
+            desc: desc
+        });
+        saveAndSync();
+        renderAdminList();
+        e.target.reset();
+        alert("Stroj byl úspěšně přidán!");
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+}
+
+function deleteProduct(id) {
+    if (confirm("Opravdu chcete tento stroj smazat?")) {
+        products = products.filter(p => p.id !== id);
+        saveAndSync();
+        renderAdminList();
+    }
+}
+
+function clearAllDataItems() {
+    if (confirm("Opravdu chcete vymazat úplně všechny položky?")) {
+        products = [];
+        saveAndSync();
+        renderAdminList();
+    }
+}
+
+function triggerImageUpload(id) {
+    activeEditingId = id;
+    document.getElementById("hidden-file-input").click();
+}
+
+function handleImageChange(input) {
+    if (input.files && input.files[0] && activeEditingId !== null) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            products = products.map(p => {
+                if (p.id === activeEditingId) {
+                    p.img = evt.target.result;
+                }
+                return p;
+            });
+            saveAndSync();
+            renderAdminList();
+            activeEditingId = null;
+            input.value = "";
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function resetToDefaults() {
+    if (confirm("Chcete obnovit výchozí sadu strojů?")) {
+        products = JSON.parse(JSON.stringify(defaultProducts));
+        saveAndSync();
+        renderAdminList();
+    }
+}
+</script>
+
+</body>
+</html>

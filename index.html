@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Půjčovna vybavení</title>
+
+<style>
+:root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --dark: #0f172a;
+    --gray: #64748b;
+    --light: #f8fafc;
+    --border: #e2e8f0;
+    --success: #16a34a;
+    --danger: #dc2626;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--light);
+    color: var(--dark);
+    line-height: 1.6;
+    padding: 20px 10px;
+    display: flex;
+    justify-content: center;
+}
+.wrapper { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+.app-header { margin-bottom: -5px; padding: 0 5px; }
+.app-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--dark); }
+.app-header p { font-size: 0.9rem; color: var(--gray); }
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border: 1px solid var(--border);
+}
+.type-switch { display: flex; gap: 10px; margin-bottom: 20px; }
+.type-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--gray);
+}
+.type-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--dark); }
+.form-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+.ares-results {
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    max-height: 150px; overflow-y: auto; display: none; margin-top: -10px; margin-bottom: 15px; position: relative; z-index: 10;
+}
+.ares-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.ares-item:hover { background: var(--light); }
+.section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; }
+.products-wrapper { position: relative; display: flex; align-items: center; }
+.products-container {
+    display: flex; gap: 12px; overflow-x: auto; scroll-behavior: smooth; padding-bottom: 10px; width: 100%;
+}
+.product-card {
+    flex: 0 0 160px; background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 12px; text-align: center;
+    display: flex; flex-direction: column; justify-content: space-between; position: relative;
+}
+.product-card.active { border-color: var(--primary); background-color: #f0f9ff; }
+.product-card img { max-width: 100%; height: 75px; object-fit: contain; margin-bottom: 8px; cursor: pointer; }
+.card-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; cursor: pointer; }
+.stock-badge { font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+.stock-ok { background: #f0fdf4; color: var(--success); }
+.stock-out { background: #fef2f2; color: var(--danger); }
+.product-detail-btn {
+    background: var(--light); border: 1px solid var(--border); color: var(--dark); font-size: 0.75rem; font-weight: 600;
+    padding: 5px 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; transition: background 0.2s;
+}
+.product-detail-btn:hover { background: var(--border); }
+.scroll-btn {
+    background: #fff; border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-weight: bold; z-index: 5; flex-shrink: 0;
+}
+.preview-box { display: flex; flex-direction: column; gap: 15px; background: var(--light); border: 1px solid var(--border); padding: 15px; border-radius: 12px; }
+.preview-header { display: flex; align-items: center; gap: 12px; }
+.preview-header img { width: 70px; height: 70px; object-fit: contain; }
+.calc-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; }
+.calc-row select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+.total-price-box { display: flex; justify-content: space-between; padding: 12px 15px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-weight: 700; }
+.qty-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; font-weight: 600; font-size: 0.9rem; }
+.qty-controls { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+.qty-controls button { padding: 8px 14px; font-weight: bold; font-size: 1rem; background: none; border: none; cursor: pointer; }
+.qty-controls span { padding: 0 12px; font-weight: 600; display: flex; align-items: center; }
+.btn {
+    background-color: var(--primary); color: white; border: none; border-radius: 8px; padding: 14px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;
+}
+.btn:disabled { background-color: var(--gray); cursor: not-allowed; opacity: 0.6; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.consent-group { display: flex; flex-direction: column; gap: 10px; }
+.consent-label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+
+/* Modální okno */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+}
+.modal-content { background: #fff; border-radius: 16px; max-width: 450px; width: 100%; padding: 25px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+.modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; color: var(--gray); }
+.modal-img { width: 100%; height: 140px; object-fit: contain; margin-bottom: 15px; }
+.modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+.modal-desc { font-size: 0.9rem; color: var(--gray); margin-bottom: 15px; line-height: 1.5; }
+.modal-specs { font-size: 0.85rem; background: var(--light); padding: 10px 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); }
+
+/* Stylování pro footer */
+footer {
+    margin-top: 50px;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 40px 20px;
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+}
+.footer-container {
+    max-width: 850px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 30px;
+}
+.footer-col h4 {
+    color: #38bdf8;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+.footer-col p {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+
+<div class="app-header">
+    <h1>Půjčovna vybavení</h1>
+    <p>Zákaznická část</p>
+</div>
+
+<form onsubmit="return prepare()">
+
+<input type="hidden" id="f-z">
+<input type="hidden" id="f-s">
+<input type="hidden" id="f-k">
+<input type="hidden" id="f-o">
+
+<div class="card">
+    <div class="type-switch">
+        <button type="button" class="type-btn active" id="btn-firma" onclick="setCustomerType('firma')">Firma (ARES)</button>
+        <button type="button" class="type-btn" id="btn-obcan" onclick="setCustomerType('obcan')">Občan</button>
+    </div>
+
+    <div id="group-firma">
+        <div class="form-group">
+            <label>1. Firemní údaje (ARES)</label>
+            <input type="text" id="input-firma-nazev" placeholder="Začněte psát název firmy...">
+        </div>
+        <div id="ares-results" class="ares-results"></div>
+        <div class="form-group">
+            <label>Sídlo / Adresa</label>
+            <input type="text" id="input-firma-sidlo" placeholder="Sídlo firmy">
+        </div>
+    </div>
+
+    <div id="group-obcan" style="display:none;">
+        <div class="form-group">
+            <label>Jméno a příjmení</label>
+            <input type="text" id="jmeno_obcan" placeholder="Jan Novák">
+        </div>
+        <div class="form-group">
+            <label>Doručovací adresa</label>
+            <input type="text" id="adresa_obcan" placeholder="Ulice 123, Město">
+        </div>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+        <div class="form-group" style="flex:1;">
+            <label>Telefon</label>
+            <input type="tel" id="telefon" placeholder="+420 ...">
+        </div>
+        <div class="form-group" style="flex:1;">
+            <label>E-mail</label>
+            <input type="email" id="email_klienta" placeholder="vase@firma.cz">
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <div class="section-title">2. Výběr vybavení a sklad</div>
+
+    <div class="products-wrapper">
+        <button type="button" class="scroll-btn" onclick="scrollProducts(-200)">&#10094;</button>
+        <div class="products-container" id="products-container"></div>
+        <button type="button" class="scroll-btn" onclick="scrollProducts(200)">&#10095;</button>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="preview-box">
+            <div class="preview-header">
+                <img id="preview-img" src="">
+                <div>
+                    <b id="preview-title">Název produktu</b>
+                    <p id="preview-subtitle" style="font-size: 0.85rem; color: var(--gray);">Záloha: 0 Kč</p>
+                </div>
+            </div>
+
+            <div class="calc-row">
+                <span>Doba výpůjčky</span>
+                <select id="calc-days" onchange="updateCalculation()"></select>
+            </div>
+
+            <div class="total-price-box">
+                <span>Celkem za nájem:</span>
+                <span id="preview-total-price">0 Kč</span>
+            </div>
+        </div>
+
+        <div class="qty-row">
+            <span id="qty-label">Počet kusů:</span>
+            <div class="qty-controls">
+                <button type="button" onclick="changeQty(-1)">-</button>
+                <span id="qty-val">1</span>
+                <button type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn" id="add-btn" onclick="addToCart()">Přidat do poptávky</button>
+    </div>
+
+    <div id="cart-area" style="margin-top:20px; display:none;">
+        <div class="section-title" style="font-size: 1rem; margin-bottom: 10px;">Vybrané položky:</div>
+        <div id="cart-items"></div>
+    </div>
+</div>
+
+<div class="consent-group" style="margin-top: 20px;">
+    <label class="consent-label">
+        <input type="checkbox" id="souhlas1" required>
+        <span>Souhlasím se <a href="#" target="_blank">smluvními podmínkami</a>.</span>
+    </label>
+
+    <label class="consent-label">
+        <input type="checkbox" id="souhlas2" required>
+        <span>Beru na vědomí <a href="#" target="_blank">ochranu osobních údajů</a>.</span>
+    </label>
+</div>
+
+<button type="submit" class="btn" style="background:var(--success); margin-top:20px;">Odeslat závaznou poptávku</button>
+
+</form>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-col">
+            <h4>Půjčovna nářadí</h4>
+            <p>📍 Adresa: Hlavní 123, Město</p>
+            <p>📞 Telefon: +420 123 456 789</p>
+            <p>✉️ E-mail: info@pujcovna.cz</p>
+        </div>
+
+        <div class="footer-col">
+            <h4>Otevírací doba</h4>
+            <p>Pondělí – Pátek: 7:00 – 17:00</p>
+            <p>Sobota: 8:00 – 12:00</p>
+            <p>Neděle: Zavřeno</p>
+        </div>
+
+        <div class="footer-col" style="display: flex; align-items: flex-end;">
+            <!-- Odkaz směřuje přímo na admin.html -->
+            <a href="admin.html" style="color: #64748b; text-decoration: none; font-size: 0.8rem;">
+                🔒 Administrace
+            </a>
+        </div>
+    </div>
+</footer>
+
+</div>
+
+<!-- Modální okno detailu -->
+<div class="modal-overlay" id="productModal" onclick="closeModalOnOutside(event)">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <img id="modal-img" class="modal-img" src="" alt="">
+        <div id="modal-title" class="modal-title">Název stroje</div>
+        <div id="modal-desc" class="modal-desc">Popis stroje...</div>
+        <div id="modal-specs" class="modal-specs">
+            <b>Dostupno celkem:</b> <span id="modal-stock">0</span> ks<br>
+            <b>Cena nájmu:</b> <span id="modal-price">0</span> Kč/den<br>
+            <b>Vratná záloha:</b> <span id="modal-deposit">0</span> Kč
+        </div>
+        <button type="button" class="btn" id="modal-select-btn" onclick="selectFromModal()">Vybrat tento stroj</button>
+    </div>
+</div>
+
+<script>
+const defaultProducts = [
+    { id: 1, name: "AKU VRTAČKA", price: 300, deposit: 3000, stock: 5, img: "vrtacka.png", desc: "Výkonná AKU vrtačka vhodná pro veškeré vrtací a šroubovací práce." },
+    { id: 2, name: "MOTOROVÁ PILA", price: 350, deposit: 3000, stock: 3, img: "motorova-pila.png", desc: "Spolehlivá řetězová pila pro kácení stromů a tesařské práce." },
+    { id: 3, name: "ZAHRADNÍ DRTIČ", price: 350, deposit: 3000, stock: 2, img: "zahradni-drtic.png", desc: "Kvalitní drtič větví a zahradního odpadu." },
+    { id: 4, name: "VIBRAČNÍ DESKA", price: 350, deposit: 3000, stock: 1, img: "vibracni-deska.png", desc: "Vibrační deska pro zhutňování zeminy a zámkové dlažby." },
+    { id: 5, name: "ÚHLOVÁ BRUSKA", price: 350, deposit: 3000, stock: 4, img: "uhlova-bruska.png", desc: "Univerzální úhlová bruska na řezání a broušení." },
+    { id: 6, name: "BOURACÍ KLADIVO", price: 500, deposit: 3000, stock: 2, img: "bouraci-kladivo.png", desc: "Vysoký bourací výkon pro demolici betonových konstrukcí." },
+    { id: 7, name: "ELEKTROCENTRÁLA", price: 500, deposit: 3000, stock: 2, img: "elektrocentrala.png", desc: "Záložní generátor elektrického proudu." },
+    { id: 8, name: "TEPOVAČ", price: 500, deposit: 3000, stock: 6, img: "tepovac.png", desc: "Profesionální čistič koberců a čalounění." },
+    { id: 9, name: "PRŮMYSLOVÝ VYSAVAČ", price: 300, deposit: 1500, stock: 4, img: "prumyslovy-vysavac.png", desc: "Vysavač pro mokré i suché vysávání." },
+    { id: 10, name: "LASEROVÝ NIVELÁTOR", price: 300, deposit: 1500, stock: 2, img: "laserovy-nivelator.png", desc: "Rotační laser pro přesné zaměřování rovin." },
+    { id: 11, name: "STOLNÍ PILA", price: 400, deposit: 2000, stock: 1, img: "stolni-pila.png", desc: "Přesná stolní pila s vodním chlazením." },
+    { id: 13, name: "ODVLHČOVAČ", price: 300, deposit: 1500, stock: 3, img: "odvlhcovac.png", desc: "Vysokokapacitní odvlhčovač vzduchu." }
+];
+
+let products = JSON.parse(localStorage.getItem('pujcovna_data')) || defaultProducts;
+
+let selectedProduct = null;
+let currentQty = 1;
+let cart = [];
+let modalTargetId = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderProductSelection();
+    if(products.length > 0) selectProduct(products[0].id);
+});
+
+document.getElementById('input-firma-nazev').addEventListener('input', function() {
+    const query = this.value.trim();
+    const resDiv = document.getElementById('ares-results');
+    if (query.length < 3) { resDiv.style.display = 'none'; return; }
+    
+    fetch(`https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/vyhledat`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ obchodniJmeno: query, pocet: 5 })
+    }).then(r => r.json()).then(data => {
+        if (data.ekonomickeSubjekty && data.ekonomickeSubjekty.length > 0) {
+            resDiv.innerHTML = data.ekonomickeSubjekty.map(s => {
+                const adresaText = s.sidlo && s.sidlo.textovaAdresa ? s.sidlo.textovaAdresa : 'Adresa neuvedena';
+                return `
+                <div class="ares-item" onclick="setAres('${s.obchodniJmeno.replace(/'/g, "\\'")}','${adresaText.replace(/'/g, "\\'")}')">
+                    <b>${s.obchodniJmeno}</b><br>
+                    <small>${adresaText}</small>
+                </div>`;
+            }).join('');
+            resDiv.style.display = 'block';
+        } else {
+            resDiv.style.display = 'none';
+        }
+    }).catch(err => resDiv.style.display = 'none');
+});
+
+function setAres(n, a) { 
+    document.getElementById('input-firma-nazev').value = n; 
+    document.getElementById('input-firma-sidlo').value = a; 
+    document.getElementById('ares-results').style.display = 'none'; 
+}
+
+function renderProductSelection() {
+    const c = document.getElementById("products-container");
+    c.innerHTML = products.map(p => {
+        const isOut = p.stock <= 0;
+        const imgSrc = p.img || p.obrazek || '';
+        return `
+        <div class="product-card ${isOut ? 'out-of-stock' : ''}" id="prod-${p.id}">
+            <div>
+                <img src="${imgSrc}" alt="${p.name}" onclick="selectProduct(${p.id})">
+                <div class="card-title" onclick="selectProduct(${p.id})">${p.name}</div>
+                <div class="stock-badge ${isOut ? 'stock-out' : 'stock-ok'}">
+                    ${isOut ? 'Vyprodáno' : 'Skladem: ' + p.stock}
+                </div>
+            </div>
+            <button type="button" class="product-detail-btn" onclick="openModal(${p.id})">Detail stroje</button>
+        </div>`;
+    }).join('');
+}
+
+function selectProduct(id) {
+    selectedProduct = products.find(p => p.id === id);
+    if (!selectedProduct) return;
+
+    document.querySelectorAll(".product-card").forEach(el => el.classList.remove("active"));
+    const card = document.getElementById(`prod-${id}`);
+    if(card) card.classList.add("active");
+
+    currentQty = 1;
+    document.getElementById("qty-val").innerText = "1";
+
+    renderProductDetail();
+}
+
+function renderProductDetail() {
+    document.getElementById("preview-title").innerText = selectedProduct.name || selectedProduct.nazev;
+    document.getElementById("preview-subtitle").innerText = "Záloha: " + (selectedProduct.deposit || 0) + " Kč | Skladem: " + (selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad) + " ks";
+    document.getElementById("preview-img").src = selectedProduct.img || selectedProduct.obrazek || '';
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    document.getElementById("qty-label").innerText = `Počet kusů (skladem: ${currentStock}):`;
+
+    const sel = document.getElementById("calc-days");
+    sel.innerHTML = "";
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    for (let d = 1; d <= 14; d++) {
+        sel.innerHTML += `<option value="${d}">${d} dní — ${pPrice * d} Kč</option>`;
+    }
+
+    updateCalculation();
+}
+
+function updateCalculation() {
+    const days = parseInt(document.getElementById("calc-days").value);
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    const total = pPrice * days * currentQty;
+    document.getElementById("preview-total-price").innerText = total + " Kč";
+
+    const addBtn = document.getElementById("add-btn");
+    if (currentStock <= 0) {
+        addBtn.innerText = "Stroj není skladem";
+        addBtn.disabled = true;
+    } else {
+        addBtn.innerText = "Přidat do poptávky";
+        addBtn.disabled = false;
+    }
+}
+
+function changeQty(delta) {
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    if (currentStock <= 0) return;
+    currentQty = Math.max(1, Math.min(currentQty + delta, currentStock));
+    document.getElementById("qty-val").innerText = currentQty;
+    updateCalculation();
+}
+
+function addToCart() {
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    if (currentStock <= 0) {
+        alert("Tento stroj již není skladem!");
+        return;
+    }
+
+    const days = parseInt(document.getElementById("calc-days").value);
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    const total = pPrice * days * currentQty;
+
+    if (selectedProduct.stock !== undefined) {
+        selectedProduct.stock -= currentQty;
+    } else {
+        selectedProduct.sklad -= currentQty;
+    }
+    localStorage.setItem('pujcovna_data', JSON.stringify(products));
+
+    cart.push({
+        id: selectedProduct.id,
+        name: selectedProduct.name || selectedProduct.nazev,
+        qty: currentQty,
+        days: days,
+        total: total
+    });
+
+    renderCart();
+    renderProductSelection();
+    selectProduct(selectedProduct.id);
+}
+
+function renderCart() {
+    const area = document.getElementById("cart-area");
+    const list = document.getElementById("cart-items");
+
+    area.style.display = cart.length ? "block" : "none";
+
+    list.innerHTML = cart.map((item, i) => `
+        <div class="cart-item">
+            <span>${item.name} × ${item.qty} — ${item.days} dní — ${item.total} Kč</span>
+            <b onclick="removeItem(${i})" style="cursor:pointer; color:red; padding: 4px;" title="Vrátit do skladu">✕</b>
+        </div>
+    `).join('');
+}
+
+function removeItem(i) {
+    const item = cart[i];
+    const prod = products.find(p => p.id === item.id);
+    if (prod) {
+        if (prod.stock !== undefined) {
+            prod.stock += item.qty;
+        } else {
+            prod.sklad += item.qty;
+        }
+        localStorage.setItem('pujcovna_data', JSON.stringify(products));
+    }
+
+    cart.splice(i, 1);
+    renderCart();
+    renderProductSelection();
+    if(selectedProduct) selectProduct(selectedProduct.id);
+}
+
+function scrollProducts(offset) {
+    document.getElementById("products-container").scrollBy({ left: offset, behavior: "smooth" });
+}
+
+function setCustomerType(type) {
+    const btnFirma = document.getElementById("btn-firma");
+    const btnObcan = document.getElementById("btn-obcan");
+    const groupFirma = document.getElementById("group-firma");
+    const groupObcan = document.getElementById("group-obcan");
+
+    if (type === "firma") {
+        btnFirma.classList.add("active");
+        btnObcan.classList.remove("active");
+        groupFirma.style.display = "block";
+        groupObcan.style.display = "none";
+    } else {
+        btnObcan.classList.add("active");
+        btnFirma.classList.remove("active");
+        groupFirma.style.display = "none";
+        groupObcan.style.display = "block";
+    }
+}
+
+function openModal(id) {
+    modalTargetId = id;
+    const p = products.find(item => item.id === id);
+    if (!p) return;
+
+    document.getElementById("modal-img").src = p.img || p.obrazek || '';
+    document.getElementById("modal-title").innerText = p.name || p.nazev;
+    document.getElementById("modal-desc").innerText = p.desc || "Detailní popis pro tento stroj není vyplněn.";
+    document.getElementById("modal-stock").innerText = p.stock !== undefined ? p.stock : p.sklad;
+    document.getElementById("modal-price").innerText = p.price || p.cenaZaDen;
+    document.getElementById("modal-deposit").innerText = p.deposit || 0;
+
+    const modalBtn = document.getElementById("modal-select-btn");
+    const currentStock = p.stock !== undefined ? p.stock : p.sklad;
+    if (currentStock <= 0) {
+        modalBtn.innerText = "Vyprodáno";
+        modalBtn.disabled = true;
+    } else {
+        modalBtn.innerText = "Vybrat tento stroj";
+        modalBtn.disabled = false;
+    }
+
+    document.getElementById("productModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("productModal").style.display = "none";
+}
+
+function closeModalOnOutside(event) {
+    if (event.target.id === "productModal") closeModal();
+}
+
+function selectFromModal() {
+    if (modalTargetId !== null) {
+        selectProduct(modalTargetId);
+        closeModal();
+    }
+}
+
+function prepare() {
+    if (!cart.length) {
+        alert("Přidejte alespoň jednu položku do poptávky!");
+        return false;
+    }
+
+    const isFirma = document.getElementById("btn-firma").classList.contains("active");
+
+    if (isFirma) {
+        const n = document.getElementById("input-firma-nazev").value;
+        const a = document.getElementById("input-firma-sidlo").value;
+        if (!n) { alert("Vyplňte prosím název firmy!"); return false; }
+        document.getElementById("f-z").value = "Firma: " + n;
+        document.getElementById("f-s").value = a;
+    } else {
+        const j = document.getElementById("jmeno_obcan").value;
+        const a = document.getElementById("adresa_obcan").value;
+        if (!j || !a) { alert("Vyplňte prosím jméno a doručovací adresu!"); return false; }
+        document.getElementById("f-z").value = "Občan: " + j;
+        document.getElementById("f-s").value = a;
+    }
+
+    const tel = document.getElementById("telefon").value;
+    const email = document.getElementById("email_klienta").value;
+    if (!tel || !email) {
+        alert("Vyplňte kontaktní telefon a e-mail!");
+        return false;
+    }
+
+    document.getElementById("f-k").value = "Tel: " + tel + " | Mail: " + email;
+    document.getElementById("f-o").value = cart.map(c => `${c.name} × ${c.qty} — ${c.days} dní — ${c.total} Kč`).join(" | ");
+
+    return true;
+}
+</script>
+
+</body>
+</html>
