@@ -47,6 +47,13 @@ body {
 .btn-danger { background-color: var(--danger); }
 .btn-danger:hover { background-color: #b91c1c; }
 .btn-secondary { background-color: var(--gray); }
+
+/* Styly pro objednávky */
+.order-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; font-size: 0.9rem; }
+.order-items { font-size: 0.9rem; margin-bottom: 10px; background: var(--light); padding: 10px; border-radius: 8px; }
+.order-client { font-size: 0.85rem; color: var(--gray); }
+
 .admin-product-item {
     display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
 }
@@ -95,6 +102,17 @@ body {
     <div style="display: flex; gap: 15px; align-items: center;">
         <span class="action-link action-link-danger" onclick="lockAdmin()">Zamknout</span>
         <a href="index.html" class="action-link" style="font-size: 0.9rem;">← Zpět na web</a>
+    </div>
+</div>
+
+<!-- SEKCE: PŘÍCHOZÍ OBJEDNÁVKY -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div class="section-title" style="margin-bottom: 0;">📦 Příchozí objednávky / poptávky</div>
+        <button type="button" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="clearAllOrders()">Smazat všechny objednávky</button>
+    </div>
+    <div id="admin-orders-list">
+        <p style="color:var(--gray); font-size:0.9rem;">Žádné nové objednávky.</p>
     </div>
 </div>
 
@@ -169,7 +187,6 @@ let products = [];
 let activeEditingId = null;
 let currentCryptoKey = null;
 
-// Kryptografické funkce pro AES-GCM šifrování v prohlížeči
 async function deriveKey(password, salt) {
     const enc = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
@@ -194,8 +211,6 @@ async function encryptData(secretData, password) {
         key,
         enc.encode(JSON.stringify(secretData))
     );
-    
-    // Uložíme salt, iv a zašifrovaný obsah jako spojení
     const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
     combined.set(salt, 0);
     combined.set(iv, salt.length);
@@ -223,27 +238,22 @@ async function decryptData(encryptedBase64, password) {
         const dec = new TextDecoder();
         return JSON.parse(dec.decode(decrypted));
     } catch (e) {
-        return null; // Špatné heslo nebo poškozená data
+        return null;
     }
 }
 
 async function handleAuth() {
     const pwdInput = document.getElementById("auth-password").value;
-    if (!pwdInput) {
-        alert("Zadejte heslo.");
-        return;
-    }
+    if (!pwdInput) { alert("Zadejte heslo."); return; }
 
     const storedEncrypted = localStorage.getItem('pujcovna_secure_data');
 
     if (!storedEncrypted) {
-        // První spuštění - nastavujeme heslo a ukládáme výchozí data
         currentCryptoKey = pwdInput;
         products = JSON.parse(JSON.stringify(defaultProducts));
         await saveAndSync();
         unlockUI();
     } else {
-        // Ověření hesla dešifrováním
         const decrypted = await decryptData(storedEncrypted, pwdInput);
         if (decrypted !== null) {
             currentCryptoKey = pwdInput;
@@ -268,6 +278,7 @@ function unlockUI() {
     document.getElementById("auth-overlay").style.display = "none";
     document.getElementById("admin-content").style.display = "flex";
     renderAdminList();
+    renderOrdersList();
 }
 
 function lockAdmin() {
@@ -276,8 +287,6 @@ function lockAdmin() {
     document.getElementById("auth-password").value = "";
     document.getElementById("admin-content").style.display = "none";
     document.getElementById("auth-overlay").style.display = "flex";
-    
-    // Zjistíme, zda už je heslo nastavené, abychom upravili text instrukce
     if (localStorage.getItem('pujcovna_secure_data')) {
         document.getElementById("auth-instruction").innerText = "Administrace byla zamčena. Zadejte heslo:";
     }
@@ -288,8 +297,6 @@ async function saveAndSync() {
     try {
         const encryptedString = await encryptData(products, currentCryptoKey);
         localStorage.setItem('pujcovna_secure_data', encryptedString);
-        
-        // Zde synchronizujeme data i pro veřejný web (pokud čte z pujcovna_data)
         localStorage.setItem('pujcovna_data', JSON.stringify(products));
     } catch (e) {
         alert("Chyba: Úložiště je plné nebo selhalo šifrování.");
@@ -317,6 +324,51 @@ function renderAdminList() {
             </div>
         </div>
     `).join('');
+}
+
+// Funkce pro správu a vykreslení příchozích objednávek
+function renderOrdersList() {
+    const ordersListDiv = document.getElementById("admin-orders-list");
+    const orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
+
+    if (orders.length === 0) {
+        ordersListDiv.innerHTML = `<p style="color:var(--gray); font-size:0.9rem;">Žádné nové objednávky.</p>`;
+        return;
+    }
+
+    ordersListDiv.innerHTML = orders.map((o, index) => `
+        <div class="order-card">
+            <div class="order-header">
+                <div><b>Poptávka #${orders.length - index}</b> <span style="color: var(--gray); margin-left: 8px;">(${o.date})</span></div>
+                <span class="action-link action-link-danger" onclick="deleteOrder(${index})">Vyřídit / Smazat</span>
+            </div>
+            <div class="order-items">
+                <b>Položky:</b><br>
+                ${o.itemsText.replace(/\n/g, '<br>')}
+            </div>
+            <div class="order-client">
+                <b>Zákazník:</b> ${o.clientName} (${o.clientType})<br>
+                <b>Adresa:</b> ${o.clientAddress}<br>
+                <b>Kontakt:</b> <a href="tel:${o.phone}">${o.phone}</a> | <a href="mailto:${o.email}">${o.email}</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteOrder(index) {
+    if (confirm("Opravdu chcete tuto objednávku smazat?")) {
+        let orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
+        orders.splice(index, 1);
+        localStorage.setItem('pujcovna_orders', JSON.stringify(orders));
+        renderOrdersList();
+    }
+}
+
+function clearAllOrders() {
+    if (confirm("Opravdu chcete smazat úplně všechny objednávky?")) {
+        localStorage.removeItem('pujcovna_orders');
+        renderOrdersList();
+    }
 }
 
 async function addNewProduct(e) {
@@ -432,7 +484,6 @@ async function resetToDefaults() {
     }
 }
 
-// Při prvním načtení zkontrolujeme, zda už je databáze inicializovaná
 document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem('pujcovna_secure_data')) {
         document.getElementById("auth-instruction").innerText = "Vytvořte si heslo pro zabezpečení administrace:";
