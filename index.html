@@ -10,7 +10,8 @@
     --primary: #ea580c;        /* Výrazná řemeslná oranžová */
     --primary-dark: #c2410c;   /* Tmavší oranžová pro hover */
     --dark: #1e293b;           /* Hluboká břidlicová šedá */
-    ---gray: #1e293b; /* Změněno ze světle šedé na sytou tmavou barvu */
+    --gray: #64748b;           /* Opraveno: sytá neutrální šedá pro texty */
+    --dark-bg: #0f172a;        /* Tmavá barva pozadí stránek/body */
     --light: #f8fafc;
     --border: #e2e8f0;
     --success: #16a34a;
@@ -22,7 +23,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: var(--gray);
+    background-color: var(--dark-bg);
     color: var(--dark);
     line-height: 1.6;
     padding: 30px 10px;
@@ -697,50 +698,32 @@ function sendOrder(platform) {
     const textZpravy = validateAndBuildOrderText();
     if (!textZpravy) return;
 
-    const modal = document.getElementById("successModal");
-    const descText = document.getElementById("success-desc-text");
-
     if (platform === 'whatsapp') {
-        descText.innerHTML = "Vaše poptávka byla předána do aplikace <b>WhatsApp</b>. Potvrďte odeslání zprávy v okně WhatsAppu. Brzy se vám ozveme!";
-        modal.style.display = "flex";
-
-        const adminPhone = localStorage.getItem('pujcovna_admin_phone') || '420123456789';
-        const encoded = encodeURIComponent(textZpravy);
-        setTimeout(() => {
-            window.open(`https://wa.me/${adminPhone}?text=${encoded}`, '_blank');
-        }, 300);
-
+        const phoneNum = (localStorage.getItem('pujcovna_admin_phone') || '+420123456789').replace(/[^0-9+]/g, '');
+        window.open(`https://wa.me/${phoneNum}?text=${encodeURIComponent(textZpravy)}`, '_blank');
     } else if (platform === 'email') {
-        descText.innerHTML = "Vaše poptávka byla předána do vašeho <b>e-mailového klienta</b>. Odešlete předvyplněný e-mail. Brzy se vám ozveme!";
-        modal.style.display = "flex";
-
-        const adminEmail = localStorage.getItem('pujcovna_admin_email') || 'info@pujcovna.cz';
-        const subject = encodeURIComponent("Nová poptávka z webu - Půjčovna");
-        const body = encodeURIComponent(textZpravy);
-        setTimeout(() => {
-            window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
-        }, 300);
-
+        const emailAddr = localStorage.getItem('pujcovna_admin_email') || 'info@pujcovna.cz';
+        window.location.href = `mailto:${emailAddr}?subject=${encodeURIComponent("Nová poptávka z webu")}&body=${encodeURIComponent(textZpravy)}`;
     } else if (platform === 'facebook') {
-        descText.innerHTML = "Vaše poptávka byla připravena pro <b>Facebook</b>. Potvrďte sdílení. Brzy se vám ozveme!";
-        modal.style.display = "flex";
-
-        const encoded = encodeURIComponent(textZpravy);
-        setTimeout(() => {
-            window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encoded}`, '_blank');
-        }, 300);
+        if (navigator.share) {
+            navigator.share({ title: 'Poptávka', text: textZpravy }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(textZpravy);
+            alert("Poptávka byla zkopírována do schránky.");
+        }
     }
+
+    document.getElementById("successModal").style.display = "flex";
 }
 
 function closeSuccessModal() {
     document.getElementById("successModal").style.display = "none";
     cart = [];
     renderCart();
-    document.getElementById("poptavka-form").reset();
     renderProductSelection();
+    document.getElementById("poptavka-form").reset();
     if(products.length > 0) selectProduct(products[0].id);
 }
 </script>
-
 </body>
 </html>
