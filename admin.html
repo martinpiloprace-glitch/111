@@ -54,25 +54,54 @@ body {
 .admin-product-info { flex: 1; }
 .admin-product-title { font-weight: 700; font-size: 0.95rem; }
 .admin-product-details { font-size: 0.8rem; color: var(--gray); }
-.admin-actions { display: flex; gap: 8px; align-items: center; }
+.admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .action-link { font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; }
 .action-link:hover { text-decoration: underline; }
 .action-link-danger { color: var(--danger); }
+
+/* Přihlašovací overlay */
+#auth-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: center; z-index: 9999;
+}
+.auth-box {
+    background: #ffffff; padding: 30px; border-radius: 16px; width: 100%; max-width: 380px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 15px;
+}
+.auth-box h2 { font-size: 1.25rem; font-weight: 800; color: var(--dark); text-align: center; }
+.auth-box p { font-size: 0.85rem; color: var(--gray); text-align: center; }
 </style>
 </head>
 
 <body>
-<div class="wrapper">
+
+<!-- PŘIHLAŠOVACÍ OKNO -->
+<div id="auth-overlay">
+    <div class="auth-box">
+        <h2>Zabezpečená administrace</h2>
+        <p id="auth-instruction">Zadejte heslo pro dešifrování databáze strojů.</p>
+        <div class="form-group" style="margin-bottom: 0;">
+            <input type="password" id="auth-password" placeholder="Heslo..." onkeydown="if(event.key === 'Enter') handleAuth()">
+        </div>
+        <button type="button" class="btn" onclick="handleAuth()">Odemknout</button>
+    </div>
+</div>
+
+<div class="wrapper" id="admin-content" style="display: none;">
 
 <div class="app-header">
     <h1>Administrace půjčovny</h1>
-    <a href="index.html" class="action-link" style="font-size: 0.9rem;">← Zpět na web</a>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span class="action-link action-link-danger" onclick="lockAdmin()">Zamknout</span>
+        <a href="index.html" class="action-link" style="font-size: 0.9rem;">← Zpět na web</a>
+    </div>
 </div>
 
 <!-- Přidání nového stroje -->
 <div class="card">
     <div class="section-title">Přidat nový stroj do nabídky</div>
-    <form onsubmit="addNewProduct(event)">
+    <form id="add-form" onsubmit="addNewProduct(event)">
         <div class="form-group">
             <label>Název stroje</label>
             <input type="text" id="new-name" placeholder="např. Televize" required>
@@ -117,7 +146,7 @@ body {
 
 </div>
 
-<!-- Skrytý input pro změnu fotky u existující položky -->
+<!-- Skrytý input pro změnu fotky -->
 <input type="file" id="hidden-file-input" style="display:none;" accept="image/*" onchange="handleImageChange(this)">
 
 <script>
@@ -136,28 +165,134 @@ const defaultProducts = [
     { id: 13, name: "ODVLHČOVAČ", price: 300, deposit: 1500, stock: 3, img: "odvlhcovac.png", desc: "Vysokokapacitní odvlhčovač vzduchu." }
 ];
 
-let rawData = JSON.parse(localStorage.getItem('pujcovna_data')) || defaultProducts;
-let products = rawData.map(p => ({
-    id: p.id,
-    name: p.name || p.nazev || "Neznámý stroj",
-    price: p.price !== undefined ? p.price : (p.cenaZaDen || 0),
-    deposit: p.deposit !== undefined ? p.deposit : 0,
-    stock: p.stock !== undefined ? p.stock : (p.sklad || 0),
-    img: p.img || p.obrazek || "",
-    desc: p.desc || ""
-}));
-
+let products = [];
 let activeEditingId = null;
+let currentCryptoKey = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    renderAdminList();
-});
+// Kryptografické funkce pro AES-GCM šifrování v prohlížeči
+async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+        "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    return await window.crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
 
-function saveAndSync() {
+async function encryptData(secretData, password) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const enc = new TextEncoder();
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        enc.encode(JSON.stringify(secretData))
+    );
+    
+    // Uložíme salt, iv a zašifrovaný obsah jako spojení
+    const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+    combined.set(salt, 0);
+    combined.set(iv, salt.length);
+    combined.set(new Uint8Array(encrypted), salt.length + iv.length);
+    return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptData(encryptedBase64, password) {
     try {
+        const binStr = atob(encryptedBase64);
+        const combined = new Uint8Array(binStr.length);
+        for (let i = 0; i < binStr.length; i++) {
+            combined[i] = binStr.charCodeAt(i);
+        }
+        const salt = combined.slice(0, 16);
+        const iv = combined.slice(16, 28);
+        const data = combined.slice(28);
+        
+        const key = await deriveKey(password, salt);
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            data
+        );
+        const dec = new TextDecoder();
+        return JSON.parse(dec.decode(decrypted));
+    } catch (e) {
+        return null; // Špatné heslo nebo poškozená data
+    }
+}
+
+async function handleAuth() {
+    const pwdInput = document.getElementById("auth-password").value;
+    if (!pwdInput) {
+        alert("Zadejte heslo.");
+        return;
+    }
+
+    const storedEncrypted = localStorage.getItem('pujcovna_secure_data');
+
+    if (!storedEncrypted) {
+        // První spuštění - nastavujeme heslo a ukládáme výchozí data
+        currentCryptoKey = pwdInput;
+        products = JSON.parse(JSON.stringify(defaultProducts));
+        await saveAndSync();
+        unlockUI();
+    } else {
+        // Ověření hesla dešifrováním
+        const decrypted = await decryptData(storedEncrypted, pwdInput);
+        if (decrypted !== null) {
+            currentCryptoKey = pwdInput;
+            products = decrypted.map(p => ({
+                id: p.id,
+                name: p.name || p.nazev || "Neznámý stroj",
+                price: p.price !== undefined ? p.price : (p.cenaZaDen || 0),
+                deposit: p.deposit !== undefined ? p.deposit : 0,
+                stock: p.stock !== undefined ? p.stock : (p.sklad || 0),
+                img: p.img || p.obrazek || "",
+                desc: p.desc || ""
+            }));
+            unlockUI();
+        } else {
+            alert("Nesprávné heslo!");
+            document.getElementById("auth-password").value = "";
+        }
+    }
+}
+
+function unlockUI() {
+    document.getElementById("auth-overlay").style.display = "none";
+    document.getElementById("admin-content").style.display = "flex";
+    renderAdminList();
+}
+
+function lockAdmin() {
+    currentCryptoKey = null;
+    products = [];
+    document.getElementById("auth-password").value = "";
+    document.getElementById("admin-content").style.display = "none";
+    document.getElementById("auth-overlay").style.display = "flex";
+    
+    // Zjistíme, zda už je heslo nastavené, abychom upravili text instrukce
+    if (localStorage.getItem('pujcovna_secure_data')) {
+        document.getElementById("auth-instruction").innerText = "Administrace byla zamčena. Zadejte heslo:";
+    }
+}
+
+async function saveAndSync() {
+    if (!currentCryptoKey) return;
+    try {
+        const encryptedString = await encryptData(products, currentCryptoKey);
+        localStorage.setItem('pujcovna_secure_data', encryptedString);
+        
+        // Zde synchronizujeme data i pro veřejný web (pokud čte z pujcovna_data)
         localStorage.setItem('pujcovna_data', JSON.stringify(products));
     } catch (e) {
-        alert("Chyba: Úložiště je plné. Zvolte menší obrázek.");
+        alert("Chyba: Úložiště je plné nebo selhalo šifrování.");
     }
 }
 
@@ -169,21 +304,22 @@ function renderAdminList() {
     }
 
     list.innerHTML = products.map(p => `
-        <div class="admin-product-item">
+        <div class="admin-product-item" data-id="${p.id}">
             <img src="${p.img}" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22%23999%22>Foto</text></svg>'">
             <div class="admin-product-info">
                 <div class="admin-product-title">${p.name}</div>
                 <div class="admin-product-details">${p.price} Kč/den | Záloha: ${p.deposit} Kč | Skladem: ${p.stock} ks</div>
             </div>
             <div class="admin-actions">
-                <span class="action-link" onclick="triggerImageUpload(${p.id})">Změnit foto</span>
+                <span class="action-link" onclick="editProduct(${p.id})">Upravit</span>
+                <span class="action-link" onclick="triggerImageUpload(${p.id})">Foto</span>
                 <span class="action-link action-link-danger" onclick="deleteProduct(${p.id})">Smazat</span>
             </div>
         </div>
     `).join('');
 }
 
-function addNewProduct(e) {
+async function addNewProduct(e) {
     e.preventDefault();
     const name = document.getElementById("new-name").value.trim();
     const desc = document.getElementById("new-desc").value.trim();
@@ -198,7 +334,7 @@ function addNewProduct(e) {
     }
 
     const reader = new FileReader();
-    reader.onload = function(evt) {
+    reader.onload = async function(evt) {
         const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
         products.push({
             id: newId,
@@ -209,26 +345,56 @@ function addNewProduct(e) {
             img: evt.target.result,
             desc: desc
         });
-        saveAndSync();
+        await saveAndSync();
         renderAdminList();
-        e.target.reset();
-        alert("Stroj byl úspěšně přidán!");
+        document.getElementById("add-form").reset();
+        alert("Stroj byl úspěšně přidán a zašifrován!");
     };
     reader.readAsDataURL(fileInput.files[0]);
 }
 
-function deleteProduct(id) {
+async function editProduct(id) {
+    const p = products.find(item => item.id === id);
+    if (!p) return;
+
+    const newName = prompt("Upravte název stroje:", p.name);
+    if (newName === null) return;
+    
+    const newPrice = prompt("Upravte cenu za den (Kč):", p.price);
+    if (newPrice === null) return;
+
+    const newDeposit = prompt("Upravte výši zálohy (Kč):", p.deposit);
+    if (newDeposit === null) return;
+
+    const newStock = prompt("Upravte počet kusů skladem:", p.stock);
+    if (newStock === null) return;
+
+    const newDesc = prompt("Upravte popis stroje:", p.desc);
+    if (newDesc === null) return;
+
+    p.name = newName.trim() || p.name;
+    p.price = parseInt(newPrice) || p.price;
+    p.deposit = parseInt(newDeposit) || p.deposit;
+    p.stock = parseInt(newStock) || p.stock;
+    p.desc = newDesc.trim() !== "" ? newDesc.trim() : p.desc;
+
+    await saveAndSync();
+    renderAdminList();
+    alert("Změny byly uloženy a zašifrovány!");
+}
+
+async function deleteProduct(id) {
     if (confirm("Opravdu chcete tento stroj smazat?")) {
         products = products.filter(p => p.id !== id);
-        saveAndSync();
+        await saveAndSync();
         renderAdminList();
     }
 }
 
-function clearAllDataItems() {
+async function clearAllDataItems() {
     if (confirm("Opravdu chcete vymazat úplně všechny položky?")) {
         products = [];
-        saveAndSync();
+        await saveAndSync();
         renderAdminList();
     }
 }
@@ -241,29 +407,37 @@ function triggerImageUpload(id) {
 function handleImageChange(input) {
     if (input.files && input.files[0] && activeEditingId !== null) {
         const reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = async function(evt) {
             products = products.map(p => {
                 if (p.id === activeEditingId) {
                     p.img = evt.target.result;
                 }
                 return p;
             });
-            saveAndSync();
+            await saveAndSync();
             renderAdminList();
             activeEditingId = null;
             input.value = "";
+            alert("Fotografie byla změněna a zašifrována!");
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 
-function resetToDefaults() {
+async function resetToDefaults() {
     if (confirm("Chcete obnovit výchozí sadu strojů?")) {
         products = JSON.parse(JSON.stringify(defaultProducts));
-        saveAndSync();
+        await saveAndSync();
         renderAdminList();
     }
 }
+
+// Při prvním načtení zkontrolujeme, zda už je databáze inicializovaná
+document.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem('pujcovna_secure_data')) {
+        document.getElementById("auth-instruction").innerText = "Vytvořte si heslo pro zabezpečení administrace:";
+    }
+});
 </script>
 
 </body>
