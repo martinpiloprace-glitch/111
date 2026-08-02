@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Administrace - Půjčovna</title>
+<title>Půjčovna vybavení - Zabezpečeno</title>
 
 <style>
 :root {
-    --primary: #0284c7;
-    --primary-dark: #0369a1;
-    --dark: #0f172a;
-    --gray: #64748b;
+    --primary: #ea580c;        /* Výrazná řemeslná oranžová */
+    --primary-dark: #c2410c;   /* Tmavší oranžová pro hover */
+    --dark: #1e293b;           /* Hluboká břidlicová šedá */
+    --gray: #64748b;           /* Sytá neutrální šedá pro texty */
+    --dark-bg: #0f172a;       /* Tmavá barva pozadí stránek/body */
     --light: #f8fafc;
     --border: #e2e8f0;
     --success: #16a34a;
@@ -19,155 +20,392 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: var(--light);
+    background-color: var(--dark-bg);
     color: var(--dark);
     line-height: 1.6;
-    padding: 20px 10px;
+    padding: 30px 10px;
     display: flex;
     justify-content: center;
 }
-.wrapper { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
-.app-header { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
-.app-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--dark); }
+.wrapper { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 24px; }
+
+/* Styly pro přihlašovací obrazovku */
+#login-screen {
+    max-width: 400px;
+    width: 100%;
+    margin: 100px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    text-align: center;
+}
+#login-screen h2 {
+    color: var(--dark);
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+#login-screen p {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+#login-screen input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    background: var(--light);
+}
+#login-screen input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+}
+
+.app-header { 
+    text-align: center; 
+    margin-bottom: -10px; 
+    padding: 10px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.app-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+.app-header p { font-size: 0.95rem; color: #94a3b8; margin-top: 4px; }
+
 .card {
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    padding: 20px;
-    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    padding: 24px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: transform 0.2s;
 }
-.section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--dark); }
-.form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+
+.type-switch { display: flex; gap: 12px; margin-bottom: 24px; background: var(--light); padding: 6px; border-radius: 12px; border: 1px solid var(--border); }
+.type-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--gray);
+    transition: all 0.2s ease;
+}
+.type-btn.active { background: #ffffff; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: var(--dark); text-transform: uppercase; letter-spacing: 0.5px; }
+.form-group input { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 0.95rem; background: var(--light); transition: all 0.2s; }
+.form-group input:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1); }
+
+.ares-results {
+    background: #fff; border: 2px solid var(--border); border-radius: 12px;
+    max-height: 180px; overflow-y: auto; display: none; margin-top: -10px; margin-bottom: 18px; position: relative; z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+.ares-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.ares-item:hover { background: #fff7ed; color: var(--primary-dark); }
+
+.section-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 18px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+
+.products-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+.products-container {
+    display: flex; gap: 14px; overflow-x: auto; scroll-behavior: smooth; padding-bottom: 12px; width: 100%;
+}
+.products-container::-webkit-scrollbar { height: 6px; }
+.products-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+.product-card {
+    flex: 0 0 170px; background: #fff; border: 2px solid var(--border); border-radius: 16px; padding: 14px; text-align: center;
+    display: flex; flex-direction: column; justify-content: space-between; position: relative; cursor: pointer;
+    transition: all 0.2s ease;
+}
+.product-card:hover { border-color: #cbd5e1; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+.product-card.active { border-color: var(--primary); background-color: #fff7ed; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.1); }
+.product-card img { max-width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px; }
+.card-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+
+.stock-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; text-transform: uppercase; }
+.stock-ok { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+.stock-out { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+
+.product-detail-btn {
+    background: var(--light); border: 1px solid var(--border); color: var(--dark); font-size: 0.75rem; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+.product-detail-btn:hover { background: var(--border); color: var(--primary-dark); }
+
+.scroll-btn {
+    background: #fff; border: 2px solid var(--border); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-weight: bold; z-index: 5; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.2s;
+}
+.scroll-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+.preview-box { display: flex; flex-direction: column; gap: 15px; background: var(--light); border: 2px solid var(--border); padding: 18px; border-radius: 16px; }
+.preview-header { display: flex; align-items: center; gap: 14px; }
+.preview-header img { width: 75px; height: 75px; object-fit: contain; background: #fff; padding: 6px; border-radius: 10px; border: 1px solid var(--border); }
+
+.calc-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; }
+.calc-row select { padding: 10px 14px; border-radius: 10px; border: 2px solid var(--border); background: #fff; font-weight: 600; cursor: pointer; }
+
+.total-price-box { display: flex; justify-content: space-between; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; background: #fff; font-weight: 800; font-size: 1.05rem; }
+
+.qty-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0; font-weight: 700; font-size: 0.95rem; }
+.qty-controls { display: flex; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; }
+.qty-controls button { padding: 10px 16px; font-weight: bold; font-size: 1.1rem; background: none; border: none; cursor: pointer; transition: background 0.2s; }
+.qty-controls button:hover { background: var(--light); }
+.qty-controls span { padding: 0 14px; font-weight: 700; display: flex; align-items: center; }
+
 .btn {
-    background-color: var(--primary); color: white; border: none; border-radius: 8px; padding: 12px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;
+    background-color: var(--primary); color: white; border: none; border-radius: 12px; padding: 16px 24px; font-size: 1rem; font-weight: 800; cursor: pointer; width: 100%;
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.25); transition: all 0.2s ease;
 }
-.btn:hover { background-color: var(--primary-dark); }
-.btn-danger { background-color: var(--danger); }
-.btn-danger:hover { background-color: #b91c1c; }
-.btn-secondary { background-color: var(--gray); }
+.btn:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.35); }
+.btn:disabled { background-color: var(--gray); cursor: not-allowed; opacity: 0.6; box-shadow: none; transform: none; }
 
-/* Styly pro objednávky */
-.order-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-.order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; font-size: 0.9rem; }
-.order-items { font-size: 0.9rem; margin-bottom: 10px; background: var(--light); padding: 10px; border-radius: 8px; }
-.order-client { font-size: 0.85rem; color: var(--gray); }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.consent-group { display: flex; flex-direction: column; gap: 12px; background: #fff; padding: 18px; border-radius: 16px; border: 1px solid var(--border); }
+.consent-label { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
+.consent-label input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
 
-.admin-product-item {
-    display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
+/* Modální okno pro detail produktu */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px;
 }
-.admin-product-item img { width: 50px; height: 50px; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 6px; flex-shrink: 0; }
-.admin-product-info { flex: 1; }
-.admin-product-title { font-weight: 700; font-size: 0.95rem; }
-.admin-product-details { font-size: 0.8rem; color: var(--gray); }
-.admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-.action-link { font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; }
-.action-link:hover { text-decoration: underline; }
-.action-link-danger { color: var(--danger); }
+.modal-content { background: #fff; border-radius: 20px; max-width: 450px; width: 100%; padding: 30px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+.modal-close { position: absolute; top: 18px; right: 18px; background: var(--light); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; font-weight: bold; color: var(--dark); display: flex; align-items: center; justify-content: center; }
+.modal-img { width: 100%; height: 160px; object-fit: contain; margin-bottom: 20px; }
+.modal-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; color: var(--dark); }
+.modal-desc { font-size: 0.9rem; color: var(--gray); margin-bottom: 18px; line-height: 1.6; }
+.modal-specs { font-size: 0.9rem; background: var(--light); padding: 14px; border-radius: 12px; margin-bottom: 22px; border: 1px solid var(--border); line-height: 1.5; }
 
-/* Přihlašovací overlay */
-#auth-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
-    display: flex; justify-content: center; align-items: center; z-index: 9999;
+/* Footer */
+footer {
+    margin-top: 20px;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 40px 20px;
+    border-radius: 20px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
-.auth-box {
-    background: #ffffff; padding: 30px; border-radius: 16px; width: 100%; max-width: 380px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 15px;
+.footer-container {
+    max-width: 850px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 30px;
 }
-.auth-box h2 { font-size: 1.25rem; font-weight: 800; color: var(--dark); text-align: center; }
-.auth-box p { font-size: 0.85rem; color: var(--gray); text-align: center; }
+.footer-col h4 { color: #38bdf8; margin-bottom: 14px; font-size: 1rem; font-weight: 700; }
+.footer-col p { color: #94a3b8; font-size: 0.85rem; margin-bottom: 8px; }
 </style>
 </head>
 
 <body>
 
-<!-- PŘIHLAŠOVACÍ OKNO -->
-<div id="auth-overlay">
-    <div class="auth-box">
-        <h2>Zabezpečená administrace</h2>
-        <p id="auth-instruction">Zadejte heslo pro dešifrování databáze strojů.</p>
-        <div class="form-group" style="margin-bottom: 0;">
-            <input type="password" id="auth-password" placeholder="Heslo..." onkeydown="if(event.key === 'Enter') handleAuth()">
-        </div>
-        <button type="button" class="btn" onclick="handleAuth()">Odemknout</button>
-    </div>
+<!-- PŘIHLAŠOVACÍ OBRAZOVKA (zobrazí se jako první) -->
+<div id="login-screen">
+    <h2>Zabezpečený přístup</h2>
+    <p>Zadejte heslo pro zobrazení aplikace půjčovny:</p>
+    <input type="password" id="login-password-input" placeholder="Zadejte heslo..." onkeydown="if(event.key === 'Y' || event.key === 'Enter') verifyAppPassword()">
+    <button type="button" class="btn" onclick="verifyAppPassword()">Odemknout aplikaci</button>
+    <p id="login-error" style="color: var(--danger); font-size: 0.85rem; display: none; margin-top: 10px;">Nesprávné heslo!</p>
 </div>
 
-<div class="wrapper" id="admin-content" style="display: none;">
+<!-- HLAVNÍ OBSAH APLIKACE (původně skrytý) -->
+<div class="wrapper" id="app-wrapper" style="display: none;">
 
 <div class="app-header">
-    <h1>Administrace půjčovny</h1>
-    <div style="display: flex; gap: 15px; align-items: center;">
-        <span class="action-link action-link-danger" onclick="lockAdmin()">Zamknout</span>
-        <a href="index.html" class="action-link" style="font-size: 0.9rem;">← Zpět na web</a>
-    </div>
+    <h1>Půjčovna vybavení</h1>
+    <p>Spolehlivé stroje pro vaši stavbu i zahradu</p>
 </div>
 
-<!-- SEKCE: PŘÍCHOZÍ OBJEDNÁVKY -->
-<div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div class="section-title" style="margin-bottom: 0;">📦 Příchozí objednávky / poptávky</div>
-        <button type="button" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="clearAllOrders()">Smazat všechny objednávky</button>
-    </div>
-    <div id="admin-orders-list">
-        <p style="color:var(--gray); font-size:0.9rem;">Žádné nové objednávky.</p>
-    </div>
-</div>
+<form id="poptavka-form" onsubmit="event.preventDefault(); sendOrderToAdmin();">
 
-<!-- Přidání nového stroje -->
 <div class="card">
-    <div class="section-title">Přidat nový stroj do nabídky</div>
-    <form id="add-form" onsubmit="addNewProduct(event)">
+    <div class="type-switch">
+        <button type="button" class="type-btn active" id="btn-firma" onclick="setCustomerType('firma')">Firma (ARES)</button>
+        <button type="button" class="type-btn" id="btn-obcan" onclick="setCustomerType('obcan')">Občan</button>
+    </div>
+
+    <div id="group-firma">
         <div class="form-group">
-            <label>Název stroje</label>
-            <input type="text" id="new-name" placeholder="např. Televize" required>
+            <label>1. Firemní údaje (ARES)</label>
+            <input type="text" id="input-firma-nazev" placeholder="Začněte psát název firmy...">
         </div>
+        <div id="ares-results" class="ares-results"></div>
         <div class="form-group">
-            <label>Popis stroje</label>
-            <textarea id="new-desc" placeholder="Krátký popis..." rows="2"></textarea>
+            <label>Sídlo / Adresa</label>
+            <input type="text" id="input-firma-sidlo" placeholder="Sídlo firmy">
         </div>
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>Cena za den (Kč)</label>
-                <input type="number" id="new-price" placeholder="např. 300" required>
-            </div>
-            <div class="form-group" style="flex: 1;">
-                <label>Výše zálohy (Kč)</label>
-                <input type="number" id="new-deposit" placeholder="např. 3000" required>
-            </div>
-            <div class="form-group" style="flex: 1;">
-                <label>Počet kusů skladem</label>
-                <input type="number" id="new-stock" placeholder="např. 5" required>
-            </div>
+    </div>
+
+    <div id="group-obcan" style="display:none;">
+        <div class="form-group">
+            <label>Jméno a příjmení</label>
+            <input type="text" id="jmeno_obcan" placeholder="Jan Novák">
         </div>
         <div class="form-group">
-            <label>Fotografie stroje (vyberte obrázek)</label>
-            <input type="file" id="new-img" accept="image/*" required>
-        </div>
-        <button type="submit" class="btn">Uložit do nabídky</button>
-    </form>
-</div>
-
-<!-- Seznam existujících strojů -->
-<div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div class="section-title" style="margin-bottom: 0;">Seznam existujících strojů v nabídce</div>
-        <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="clearAllDataItems()">Smazat vše</button>
-            <button type="button" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="resetToDefaults()">Obnovit výchozí</button>
+            <label>Doručovací adresa</label>
+            <input type="text" id="adresa_obcan" placeholder="Ulice 123, Město">
         </div>
     </div>
-    <div id="admin-products-list"></div>
+
+    <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+            <label>Telefon</label>
+            <input type="tel" id="telefon" placeholder="+420 ...">
+        </div>
+        <div class="form-group" style="flex:1;">
+            <label>E-mail</label>
+            <input type="email" id="email_klienta" placeholder="vase@firma.cz">
+        </div>
+    </div>
 </div>
+
+<div class="card" style="margin-top:20px;">
+    <div class="section-title">2. Výběr vybavení a sklad</div>
+
+    <div class="products-wrapper">
+        <button type="button" class="scroll-btn" onclick="scrollProducts(-200)">&#10094;</button>
+        <div class="products-container" id="products-container"></div>
+        <button type="button" class="scroll-btn" onclick="scrollProducts(200)">&#10095;</button>
+    </div>
+
+    <div style="margin-top:20px;">
+        <div class="preview-box">
+            <div class="preview-header">
+                <img id="preview-img" src="">
+                <div>
+                    <b id="preview-title" style="font-size: 1rem;">Název produktu</b>
+                    <p id="preview-subtitle" style="font-size: 0.85rem; color: var(--gray); margin-top: 2px;">Záloha: 0 Kč</p>
+                </div>
+            </div>
+
+            <div class="calc-row">
+                <span>Doba výpůjčky</span>
+                <select id="calc-days" onchange="updateCalculation()"></select>
+            </div>
+
+            <div class="total-price-box">
+                <span>Celkem za nájem:</span>
+                <span id="preview-total-price" style="color: var(--primary);">0 Kč</span>
+            </div>
+        </div>
+
+        <div class="qty-row">
+            <span id="qty-label">Počet kusů:</span>
+            <div class="qty-controls">
+                <button type="button" onclick="changeQty(-1)">-</button>
+                <span id="qty-val">1</span>
+                <button type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn" id="add-btn" onclick="addToCart()">Přidat do poptávky</button>
+    </div>
+
+    <div id="cart-area" style="margin-top:20px; display:none;">
+        <div class="section-title" style="font-size: 1.05rem; margin-bottom: 10px;">Vybrané položky:</div>
+        <div id="cart-items"></div>
+    </div>
+</div>
+
+<div class="consent-group" style="margin-top: 20px;">
+    <label class="consent-label">
+        <input type="checkbox" id="souhlas1" required>
+        <span>Souhlasím se <a href="#" target="_blank" style="color: var(--primary); font-weight: 600;">smluvními podmínkami</a>.</span>
+    </label>
+
+    <label class="consent-label">
+        <input type="checkbox" id="souhlas2" required>
+        <span>Beru na vědomí <a href="#" target="_blank" style="color: var(--primary); font-weight: 600;">ochranu osobních údajů</a>.</span>
+    </label>
+</div>
+
+<!-- JEDINÉ TLAČÍTKO PRO ODESLÁNÍ DO ADMINISTRACE -->
+<div style="margin-top: 20px;">
+    <button type="submit" class="btn" style="background-color: var(--success); box-shadow: 0 8px 20px rgba(22, 163, 74, 0.25);">
+        🚀 Odeslat závaznou objednávku do administrace
+    </button>
+</div>
+
+</form>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-col">
+            <h4>Půjčovna nářadí</h4>
+            <p>📍 Adresa: Hlavní 123, Město</p>
+            <p>📞 Telefon: <span id="footer-phone">+420 123 456 789</span></p>
+            <p>✉️ E-mail: <span id="footer-email">info@pujcovna.cz</span></p>
+        </div>
+        <div class="footer-col">
+            <h4>Otevírací doba</h4>
+            <p>Pondělí – Pátek: 7:00 – 17:00</p>
+            <p>Sobota: 8:00 – 12:00</p>
+            <p>Neděle: Zavřeno</p>
+        </div>
+        <div class="footer-col" style="display: flex; align-items: flex-end;">
+            <a href="admin.html" style="color: #64748b; text-decoration: none; font-size: 0.8rem; font-weight: 600;">
+                🔒 Administrace
+            </a>
+        </div>
+    </div>
+</footer>
 
 </div>
 
-<!-- Skrytý input pro změnu fotky -->
-<input type="file" id="hidden-file-input" style="display:none;" accept="image/*" onchange="handleImageChange(this)">
+<!-- Modální okno detailu stroje -->
+<div class="modal-overlay" id="productModal" onclick="closeModalOnOutside(event)">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <img id="modal-img" class="modal-img" src="" alt="">
+        <div id="modal-title" class="modal-title">Název stroje</div>
+        <div id="modal-desc" class="modal-desc">Popis stroje...</div>
+        <div id="modal-specs" class="modal-specs">
+            <b>Dostupno celkem:</b> <span id="modal-stock">0</span> ks<br>
+            <b>Cena nájmu:</b> <span id="modal-price">0</span> Kč/den<br>
+            <b>Vratná záloha:</b> <span id="modal-deposit">0</span> Kč
+        </div>
+        <button type="button" class="btn" id="modal-select-btn" onclick="selectFromModal()">Vybrat tento stroj</button>
+    </div>
+</div>
 
 <script>
+// --- FUNKCE PRO OVĚŘENÍ HESLA ---
+function verifyAppPassword() {
+    const inputVal = document.getElementById("login-password-input").value;
+    
+    // TADY SI ZMĚŇ SVÉ HESLO PRO OTEVŘENÍ STRÁNKY
+    const correctPassword = "1234"; 
+
+    if (inputVal === correctPassword) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app-wrapper").style.display = "flex";
+        sessionStorage.setItem("pujcovna_app_unlocked", "true");
+    } else {
+        document.getElementById("login-error").style.display = "block";
+    }
+}
+
+// Kontrola při načtení stránky, zda už byla odemčena
+window.addEventListener("DOMContentLoaded", () => {
+    if (sessionStorage.getItem("pujcovna_app_unlocked") === "true") {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app-wrapper").style.display = "flex";
+    }
+});
+
+// Původní logika aplikace
 const defaultProducts = [
     { id: 1, name: "AKU VRTAČKA", price: 300, deposit: 3000, stock: 5, img: "vrtacka.png", desc: "Výkonná AKU vrtačka vhodná pro veškeré vrtací a šroubovací práce." },
     { id: 2, name: "MOTOROVÁ PILA", price: 350, deposit: 3000, stock: 3, img: "motorova-pila.png", desc: "Spolehlivá řetězová pila pro kácení stromů a tesařské práce." },
@@ -183,313 +421,319 @@ const defaultProducts = [
     { id: 13, name: "ODVLHČOVAČ", price: 300, deposit: 1500, stock: 3, img: "odvlhcovac.png", desc: "Vysokokapacitní odvlhčovač vzduchu." }
 ];
 
-let products = [];
-let activeEditingId = null;
-let currentCryptoKey = null;
+let products = JSON.parse(localStorage.getItem('pujcovna_data')) || defaultProducts;
 
-async function deriveKey(password, salt) {
-    const enc = new TextEncoder();
-    const keyMaterial = await window.crypto.subtle.importKey(
-        "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
-    );
-    return await window.crypto.subtle.deriveKey(
-        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["encrypt", "decrypt"]
-    );
-}
+let selectedProduct = null;
+let currentQty = 1;
+let cart = [];
+let modalTargetId = null;
 
-async function encryptData(secretData, password) {
-    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(password, salt);
-    const enc = new TextEncoder();
-    const encrypted = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        key,
-        enc.encode(JSON.stringify(secretData))
-    );
-    const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-    combined.set(salt, 0);
-    combined.set(iv, salt.length);
-    combined.set(new Uint8Array(encrypted), salt.length + iv.length);
-    return btoa(String.fromCharCode(...combined));
-}
+// Spuštění po odemčení nebo načtení
+document.addEventListener("DOMContentLoaded", () => {
+    renderProductSelection();
+    if(products.length > 0) selectProduct(products[0].id);
 
-async function decryptData(encryptedBase64, password) {
-    try {
-        const binStr = atob(encryptedBase64);
-        const combined = new Uint8Array(binStr.length);
-        for (let i = 0; i < binStr.length; i++) {
-            combined[i] = binStr.charCodeAt(i);
-        }
-        const salt = combined.slice(0, 16);
-        const iv = combined.slice(16, 28);
-        const data = combined.slice(28);
-        
-        const key = await deriveKey(password, salt);
-        const decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: iv },
-            key,
-            data
-        );
-        const dec = new TextDecoder();
-        return JSON.parse(dec.decode(decrypted));
-    } catch (e) {
-        return null;
-    }
-}
+    const savedEmail = localStorage.getItem('pujcovna_admin_email');
+    if (savedEmail) document.getElementById("footer-email").innerText = savedEmail;
+    const savedPhone = localStorage.getItem('pujcovna_admin_phone');
+    if (savedPhone) document.getElementById("footer-phone").innerText = savedPhone;
+});
 
-async function handleAuth() {
-    const pwdInput = document.getElementById("auth-password").value;
-    if (!pwdInput) { alert("Zadejte heslo."); return; }
-
-    const storedEncrypted = localStorage.getItem('pujcovna_secure_data');
-
-    if (!storedEncrypted) {
-        currentCryptoKey = pwdInput;
-        products = JSON.parse(JSON.stringify(defaultProducts));
-        await saveAndSync();
-        unlockUI();
-    } else {
-        const decrypted = await decryptData(storedEncrypted, pwdInput);
-        if (decrypted !== null) {
-            currentCryptoKey = pwdInput;
-            products = decrypted.map(p => ({
-                id: p.id,
-                name: p.name || p.nazev || "Neznámý stroj",
-                price: p.price !== undefined ? p.price : (p.cenaZaDen || 0),
-                deposit: p.deposit !== undefined ? p.deposit : 0,
-                stock: p.stock !== undefined ? p.stock : (p.sklad || 0),
-                img: p.img || p.obrazek || "",
-                desc: p.desc || ""
-            }));
-            unlockUI();
-        } else {
-            alert("Nesprávné heslo!");
-            document.getElementById("auth-password").value = "";
-        }
-    }
-}
-
-function unlockUI() {
-    document.getElementById("auth-overlay").style.display = "none";
-    document.getElementById("admin-content").style.display = "flex";
-    renderAdminList();
-    renderOrdersList();
-}
-
-function lockAdmin() {
-    currentCryptoKey = null;
-    products = [];
-    document.getElementById("auth-password").value = "";
-    document.getElementById("admin-content").style.display = "none";
-    document.getElementById("auth-overlay").style.display = "flex";
-    if (localStorage.getItem('pujcovna_secure_data')) {
-        document.getElementById("auth-instruction").innerText = "Administrace byla zamčena. Zadejte heslo:";
-    }
-}
-
-async function saveAndSync() {
-    if (!currentCryptoKey) return;
-    try {
-        const encryptedString = await encryptData(products, currentCryptoKey);
-        localStorage.setItem('pujcovna_secure_data', encryptedString);
-        localStorage.setItem('pujcovna_data', JSON.stringify(products));
-    } catch (e) {
-        alert("Chyba: Úložiště je plné nebo selhalo šifrování.");
-    }
-}
-
-function renderAdminList() {
-    const list = document.getElementById("admin-products-list");
-    if (!products.length) {
-        list.innerHTML = `<p style="color:var(--gray); font-size:0.9rem;">Žádné stroje v nabídce.</p>`;
-        return;
-    }
-
-    list.innerHTML = products.map(p => `
-        <div class="admin-product-item" data-id="${p.id}">
-            <img src="${p.img}" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22%23999%22>Foto</text></svg>'">
-            <div class="admin-product-info">
-                <div class="admin-product-title">${p.name}</div>
-                <div class="admin-product-details">${p.price} Kč/den | Záloha: ${p.deposit} Kč | Skladem: ${p.stock} ks</div>
-            </div>
-            <div class="admin-actions">
-                <span class="action-link" onclick="editProduct(${p.id})">Upravit</span>
-                <span class="action-link" onclick="triggerImageUpload(${p.id})">Foto</span>
-                <span class="action-link action-link-danger" onclick="deleteProduct(${p.id})">Smazat</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Funkce pro správu a vykreslení příchozích objednávek
-function renderOrdersList() {
-    const ordersListDiv = document.getElementById("admin-orders-list");
-    const orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
-
-    if (orders.length === 0) {
-        ordersListDiv.innerHTML = `<p style="color:var(--gray); font-size:0.9rem;">Žádné nové objednávky.</p>`;
-        return;
-    }
-
-    ordersListDiv.innerHTML = orders.map((o, index) => `
-        <div class="order-card">
-            <div class="order-header">
-                <div><b>Poptávka #${orders.length - index}</b> <span style="color: var(--gray); margin-left: 8px;">(${o.date})</span></div>
-                <span class="action-link action-link-danger" onclick="deleteOrder(${index})">Vyřídit / Smazat</span>
-            </div>
-            <div class="order-items">
-                <b>Položky:</b><br>
-                ${o.itemsText.replace(/\n/g, '<br>')}
-            </div>
-            <div class="order-client">
-                <b>Zákazník:</b> ${o.clientName} (${o.clientType})<br>
-                <b>Adresa:</b> ${o.clientAddress}<br>
-                <b>Kontakt:</b> <a href="tel:${o.phone}">${o.phone}</a> | <a href="mailto:${o.email}">${o.email}</a>
-            </div>
-        </div>
-    `).join('');
-}
-
-function deleteOrder(index) {
-    if (confirm("Opravdu chcete tuto objednávku smazat?")) {
-        let orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
-        orders.splice(index, 1);
-        localStorage.setItem('pujcovna_orders', JSON.stringify(orders));
-        renderOrdersList();
-    }
-}
-
-function clearAllOrders() {
-    if (confirm("Opravdu chcete smazat úplně všechny objednávky?")) {
-        localStorage.removeItem('pujcovna_orders');
-        renderOrdersList();
-    }
-}
-
-async function addNewProduct(e) {
-    e.preventDefault();
-    const name = document.getElementById("new-name").value.trim();
-    const desc = document.getElementById("new-desc").value.trim();
-    const price = parseInt(document.getElementById("new-price").value) || 0;
-    const deposit = parseInt(document.getElementById("new-deposit").value) || 0;
-    const stock = parseInt(document.getElementById("new-stock").value) || 0;
-    const fileInput = document.getElementById("new-img");
+document.getElementById('input-firma-nazev').addEventListener('input', function() {
+    const query = this.value.trim();
+    const resDiv = document.getElementById('ares-results');
+    if (query.length < 3) { resDiv.style.display = 'none'; return; }
     
-    if (!fileInput.files || !fileInput.files[0]) {
-        alert("Prosím vyberte fotografii stroje.");
-        return;
-    }
+    fetch(`https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/vyhledat`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ obchodniJmeno: query, pocet: 5 })
+    }).then(r => r.json()).then(data => {
+        if (data.ekonomickeSubjekty && data.ekonomickeSubjekty.length > 0) {
+            resDiv.innerHTML = data.ekonomickeSubjekty.map(s => {
+                const adresaText = s.sidlo && s.sidlo.textovaAdresa ? s.sidlo.textovaAdresa : 'Adresa neuvedena';
+                return `
+                <div class="ares-item" onclick="setAres('${s.obchodniJmeno.replace(/'/g, "\\'")}','${adresaText.replace(/'/g, "\\'")}')">
+                    <b>${s.obchodniJmeno}</b><br>
+                    <small>${adresaText}</small>
+                </div>`;
+            }).join('');
+            resDiv.style.display = 'block';
+        } else {
+            resDiv.style.display = 'none';
+        }
+    }).catch(err => resDiv.style.display = 'none');
+});
 
-    const reader = new FileReader();
-    reader.onload = async function(evt) {
-        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        products.push({
-            id: newId,
-            name: name,
-            price: price,
-            deposit: deposit,
-            stock: stock,
-            img: evt.target.result,
-            desc: desc
-        });
-        await saveAndSync();
-        renderAdminList();
-        document.getElementById("add-form").reset();
-        alert("Stroj byl úspěšně přidán a zašifrován!");
-    };
-    reader.readAsDataURL(fileInput.files[0]);
+function setAres(n, a) { 
+    document.getElementById('input-firma-nazev').value = n; 
+    document.getElementById('input-firma-sidlo').value = a; 
+    document.getElementById('ares-results').style.display = 'none'; 
 }
 
-async function editProduct(id) {
+function renderProductSelection() {
+    const c = document.getElementById("products-container");
+    c.innerHTML = products.map(p => {
+        const isOut = p.stock <= 0;
+        const imgSrc = p.img || p.obrazek || '';
+        return `
+        <div class="product-card ${isOut ? 'out-of-stock' : ''}" id="prod-${p.id}" onclick="selectProduct(${p.id})">
+            <div>
+                <img src="${imgSrc}" alt="${p.name || p.nazev}">
+                <div class="card-title">${p.name || p.nazev}</div>
+                <div class="stock-badge ${isOut ? 'stock-out' : 'stock-ok'}">
+                    ${isOut ? 'Vyprodáno' : 'Skladem: ' + (p.stock !== undefined ? p.stock : p.sklad)}
+                </div>
+            </div>
+            <button type="button" class="product-detail-btn" onclick="event.stopPropagation(); openModal(${p.id})">Detail stroje</button>
+        </div>`;
+    }).join('');
+}
+
+function selectProduct(id) {
+    selectedProduct = products.find(p => p.id === id);
+    if (!selectedProduct) return;
+
+    document.querySelectorAll(".product-card").forEach(el => el.classList.remove("active"));
+    const card = document.getElementById(`prod-${id}`);
+    if(card) card.classList.add("active");
+
+    currentQty = 1;
+    document.getElementById("qty-val").innerText = "1";
+
+    renderProductDetail();
+}
+
+function renderProductDetail() {
+    document.getElementById("preview-title").innerText = selectedProduct.name || selectedProduct.nazev;
+    document.getElementById("preview-subtitle").innerText = "Záloha: " + (selectedProduct.deposit || 0) + " Kč | Skladem: " + (selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad) + " ks";
+    document.getElementById("preview-img").src = selectedProduct.img || selectedProduct.obrazek || '';
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    document.getElementById("qty-label").innerText = `Počet kusů (skladem: ${currentStock}):`;
+
+    const sel = document.getElementById("calc-days");
+    sel.innerHTML = "";
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    for (let d = 1; d <= 14; d++) {
+        sel.innerHTML += `<option value="${d}">${d} dní — ${pPrice * d} Kč</option>`;
+    }
+
+    updateCalculation();
+}
+
+function updateCalculation() {
+    const days = parseInt(document.getElementById("calc-days").value);
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    const total = pPrice * days * currentQty;
+    document.getElementById("preview-total-price").innerText = total + " Kč";
+
+    const addBtn = document.getElementById("add-btn");
+    if (currentStock <= 0) {
+        addBtn.innerText = "Stroj není skladem";
+        addBtn.disabled = true;
+    } else {
+        addBtn.innerText = "Přidat do poptávky";
+        addBtn.disabled = false;
+    }
+}
+
+function changeQty(delta) {
+    const currentStock = selectedProduct.stock !== undefined ? selectedProduct.stock : selectedProduct.sklad;
+    if (currentStock <= 0) return;
+    currentQty = Math.max(1, Math.min(currentQty + delta, currentStock));
+    document.getElementById("qty-val").innerText = currentQty;
+    updateCalculation();
+}
+
+function addToCart() {
+    const days = parseInt(document.getElementById("calc-days").value);
+    const pPrice = selectedProduct.price || selectedProduct.cenaZaDen;
+    const total = pPrice * days * currentQty;
+
+    cart.push({
+        id: selectedProduct.id,
+        name: selectedProduct.name || selectedProduct.nazev,
+        qty: currentQty,
+        days: days,
+        total: total
+    });
+
+    renderCart();
+    renderProductSelection();
+    selectProduct(selectedProduct.id);
+}
+
+function renderCart() {
+    const area = document.getElementById("cart-area");
+    const list = document.getElementById("cart-items");
+
+    area.style.display = cart.length ? "block" : "none";
+
+    let totalDeposit = 0;
+    let totalRent = 0;
+
+    list.innerHTML = cart.map((item, i) => {
+        const productInfo = products.find(p => p.id === item.id) || {};
+        const imgSrc = productInfo.img || productInfo.obrazek || '';
+        const depositPerItem = productInfo.deposit || 0;
+        const itemDeposit = depositPerItem * item.qty;
+        
+        totalDeposit += itemDeposit;
+        totalRent += item.total;
+
+        return `
+            <div class="cart-item" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    ${imgSrc ? `<img src="${imgSrc}" style="width: 45px; height: 45px; object-fit: contain; background:#fff; padding:4px; border-radius:8px; border:1px solid var(--border);">` : ''}
+                    <div>
+                        <div><b>${item.name}</b> × ${item.qty} — ${item.days} dní</div>
+                        <small style="color: var(--gray);">Nájem: ${item.total} Kč | Záloha: ${itemDeposit} Kč</small>
+                    </div>
+                </div>
+                <b onclick="removeItem(${i})" style="cursor:pointer; color:var(--danger); padding: 6px; font-size: 1.1rem;" title="Odstranit">✕</b>
+            </div>
+        `;
+    }).join('') + (cart.length > 0 ? `
+        <div style="margin-top: 14px; padding-top: 14px; border-top: 2px solid var(--border); font-size: 0.95rem; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>Celkem za nájem:</span>
+                <b>${totalRent} Kč</b>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Celková vratná záloha:</span>
+                <b>${totalDeposit} Kč</b>
+            </div>
+        </div>
+    ` : '');
+}
+
+function removeItem(i) {
+    cart.splice(i, 1);
+    renderCart();
+    renderProductSelection();
+    if(selectedProduct) selectProduct(selectedProduct.id);
+}
+
+function scrollProducts(offset) {
+    document.getElementById("products-container").scrollBy({ left: offset, behavior: "smooth" });
+}
+
+function setCustomerType(type) {
+    const btnFirma = document.getElementById("btn-firma");
+    const btnObcan = document.getElementById("btn-obcan");
+    const groupFirma = document.getElementById("group-firma");
+    const groupObcan = document.getElementById("group-obcan");
+
+    if (type === "firma") {
+        btnFirma.classList.add("active");
+        btnObcan.classList.remove("active");
+        groupFirma.style.display = "block";
+        groupObcan.style.display = "none";
+    } else {
+        btnObcan.classList.add("active");
+        btnFirma.classList.remove("active");
+        groupFirma.style.display = "none";
+        groupObcan.style.display = "block";
+    }
+}
+
+function openModal(id) {
+    modalTargetId = id;
     const p = products.find(item => item.id === id);
     if (!p) return;
 
-    const newName = prompt("Upravte název stroje:", p.name);
-    if (newName === null) return;
+    document.getElementById("modal-img").src = p.img || p.obrazek || '';
+    document.getElementById("modal-title").innerText = p.name || p.nazev;
+    document.getElementById("modal-desc").innerText = p.desc || "Detailní popis pro tento stroj není vyplněn.";
+    document.getElementById("modal-stock").innerText = p.stock !== undefined ? p.stock : p.sklad;
+    document.getElementById("modal-price").innerText = p.price || p.cenaZaDen;
+    document.getElementById("modal-deposit").innerText = p.deposit || 0;
+
+    const modalBtn = document.getElementById("modal-select-btn");
+    const currentStock = p.stock !== undefined ? p.stock : p.sklad;
+    if (currentStock <= 0) {
+        modalBtn.innerText = "Vyprodáno";
+        modalBtn.disabled = true;
+    } else {
+        modalBtn.innerText = "Vybrat tento stroj";
+        modalBtn.disabled = false;
+    }
+
+    document.getElementById("productModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("productModal").style.display = "none";
+}
+
+function closeModalOnOutside(event) {
+    if (event.target.id === "productModal") closeModal();
+}
+
+function selectFromModal() {
+    if (modalTargetId !== null) {
+        selectProduct(modalTargetId);
+        closeModal();
+    }
+}
+
+function sendOrderToAdmin() {
+    if (!cart.length) {
+        alert("Přidejte prosím alespoň jednu položku do poptávky!");
+        return;
+    }
+
+    const isFirma = document.getElementById("btn-firma").classList.contains("active");
+    let customerName = "";
+    let customerAddress = "";
+
+    if (isFirma) {
+        customerName = document.getElementById("input-firma-nazev").value.trim();
+        customerAddress = document.getElementById("input-firma-sidlo").value.trim();
+        if (!customerName) { alert("Vyplňte prosím název firmy!"); return; }
+    } else {
+        customerName = document.getElementById("jmeno_obcan").value.trim();
+        customerAddress = document.getElementById("adresa_obcan").value.trim();
+        if (!customerName || !customerAddress) { alert("Vyplňte prosím jméno a doručovací adresu!"); return; }
+    }
+
+    const tel = document.getElementById("telefon").value.trim();
+    const email = document.getElementById("email_klienta").value.trim();
+    if (!tel || !email) {
+        alert("Vyplňte prosím kontaktní telefon a e-mail!");
+        return;
+    }
+
+    const souhlas1 = document.getElementById("souhlas1").checked;
+    const souhlas2 = document.getElementById("souhlas2").checked;
+    if (!souhlas1 || !souhlas2) {
+        alert("Pro odeslání poptávky musíte souhlasit se smluvními podmínkami a ochranou osobních údajů.");
+        return;
+    }
+
+    const newOrder = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        type: isFirma ? "Firma" : "Občan",
+        customerName: customerName,
+        customerAddress: customerAddress,
+        phone: tel,
+        email: email,
+        items: cart
+    };
+
+    let orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
+    orders.push(newOrder);
+    localStorage.setItem('pujcovna_orders', JSON.stringify(orders));
+
+    alert("Objednávka byla úspěšně odeslána do administrace!");
     
-    const newPrice = prompt("Upravte cenu za den (Kč):", p.price);
-    if (newPrice === null) return;
-
-    const newDeposit = prompt("Upravte výši zálohy (Kč):", p.deposit);
-    if (newDeposit === null) return;
-
-    const newStock = prompt("Upravte počet kusů skladem:", p.stock);
-    if (newStock === null) return;
-
-    const newDesc = prompt("Upravte popis stroje:", p.desc);
-    if (newDesc === null) return;
-
-    p.name = newName.trim() || p.name;
-    p.price = parseInt(newPrice) || p.price;
-    p.deposit = parseInt(newDeposit) || p.deposit;
-    p.stock = parseInt(newStock) || p.stock;
-    p.desc = newDesc.trim() !== "" ? newDesc.trim() : p.desc;
-
-    await saveAndSync();
-    renderAdminList();
-    alert("Změny byly uloženy a zašifrovány!");
+    cart = [];
+    renderCart();
+    renderProductSelection();
+    document.getElementById("poptavka-form").reset();
 }
-
-async function deleteProduct(id) {
-    if (confirm("Opravdu chcete tento stroj smazat?")) {
-        products = products.filter(p => p.id !== id);
-        await saveAndSync();
-        renderAdminList();
-    }
-}
-
-async function clearAllDataItems() {
-    if (confirm("Opravdu chcete vymazat úplně všechny položky?")) {
-        products = [];
-        await saveAndSync();
-        renderAdminList();
-    }
-}
-
-function triggerImageUpload(id) {
-    activeEditingId = id;
-    document.getElementById("hidden-file-input").click();
-}
-
-function handleImageChange(input) {
-    if (input.files && input.files[0] && activeEditingId !== null) {
-        const reader = new FileReader();
-        reader.onload = async function(evt) {
-            products = products.map(p => {
-                if (p.id === activeEditingId) {
-                    p.img = evt.target.result;
-                }
-                return p;
-            });
-            await saveAndSync();
-            renderAdminList();
-            activeEditingId = null;
-            input.value = "";
-            alert("Fotografie byla změněna a zašifrována!");
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-async function resetToDefaults() {
-    if (confirm("Chcete obnovit výchozí sadu strojů?")) {
-        products = JSON.parse(JSON.stringify(defaultProducts));
-        await saveAndSync();
-        renderAdminList();
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    if (!localStorage.getItem('pujcovna_secure_data')) {
-        document.getElementById("auth-instruction").innerText = "Vytvořte si heslo pro zabezpečení administrace:";
-    }
-});
 </script>
-
 </body>
 </html>
