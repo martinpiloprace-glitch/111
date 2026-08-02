@@ -3,21 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Půjčovna vybavení</title>
+<title>Půjčovna vybavení - Zabezpečeno</title>
 
 <style>
 :root {
     --primary: #ea580c;        /* Výrazná řemeslná oranžová */
     --primary-dark: #c2410c;   /* Tmavší oranžová pro hover */
     --dark: #1e293b;           /* Hluboká břidlicová šedá */
-    --gray: #64748b;           /* Opraveno: sytá neutrální šedá pro texty */
-    --dark-bg: #0f172a;        /* Tmavá barva pozadí stránek/body */
+    --gray: #64748b;           /* Sytá neutrální šedá pro texty */
+    --dark-bg: #0f172a;       /* Tmavá barva pozadí stránek/body */
     --light: #f8fafc;
     --border: #e2e8f0;
     --success: #16a34a;
-    --whatsapp: #25d366;
-    --email-btn: #0284c7;
-    --facebook: #1877f2;
     --danger: #dc2626;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,6 +28,42 @@ body {
     justify-content: center;
 }
 .wrapper { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 24px; }
+
+/* Styly pro přihlašovací obrazovku */
+#login-screen {
+    max-width: 400px;
+    width: 100%;
+    margin: 100px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    text-align: center;
+}
+#login-screen h2 {
+    color: var(--dark);
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+#login-screen p {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+#login-screen input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    background: var(--light);
+}
+#login-screen input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+}
 
 .app-header { 
     text-align: center; 
@@ -142,19 +175,6 @@ body {
 .consent-label { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
 .consent-label input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
 
-.submit-buttons-container {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-top: 10px;
-}
-.btn-whatsapp { background-color: var(--whatsapp); box-shadow: 0 8px 20px rgba(37, 211, 102, 0.25); }
-.btn-whatsapp:hover { background-color: #20ba5a; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.35); }
-.btn-email { background-color: #0284c7; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.25); }
-.btn-email:hover { background-color: #0369a1; box-shadow: 0 10px 25px rgba(2, 132, 199, 0.35); }
-.btn-facebook { background-color: var(--facebook); box-shadow: 0 8px 20px rgba(24, 119, 242, 0.25); }
-.btn-facebook:hover { background-color: #145dbf; box-shadow: 0 10px 25px rgba(24, 119, 242, 0.35); }
-
 /* Modální okno pro detail produktu */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px;
@@ -165,14 +185,6 @@ body {
 .modal-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; color: var(--dark); }
 .modal-desc { font-size: 0.9rem; color: var(--gray); margin-bottom: 18px; line-height: 1.6; }
 .modal-specs { font-size: 0.9rem; background: var(--light); padding: 14px; border-radius: 12px; margin-bottom: 22px; border: 1px solid var(--border); line-height: 1.5; }
-
-/* Modální okno pro poděkování */
-.success-modal-content {
-    background: #fff; border-radius: 20px; max-width: 450px; width: 100%; padding: 35px 25px; text-align: center; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-.success-icon { font-size: 3.5rem; margin-bottom: 15px; }
-.success-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; color: var(--dark); }
-.success-desc { font-size: 0.95rem; color: var(--gray); margin-bottom: 25px; line-height: 1.6; }
 
 /* Footer */
 footer {
@@ -198,14 +210,25 @@ footer {
 </head>
 
 <body>
-<div class="wrapper">
+
+<!-- PŘIHLAŠOVACÍ OBRAZOVKA (zobrazí se jako první) -->
+<div id="login-screen">
+    <h2>Zabezpečený přístup</h2>
+    <p>Zadejte heslo pro zobrazení aplikace půjčovny:</p>
+    <input type="password" id="login-password-input" placeholder="Zadejte heslo..." onkeydown="if(event.key === 'Y' || event.key === 'Enter') verifyAppPassword()">
+    <button type="button" class="btn" onclick="verifyAppPassword()">Odemknout aplikaci</button>
+    <p id="login-error" style="color: var(--danger); font-size: 0.85rem; display: none; margin-top: 10px;">Nesprávné heslo!</p>
+</div>
+
+<!-- HLAVNÍ OBSAH APLIKACE (původně skrytý) -->
+<div class="wrapper" id="app-wrapper" style="display: none;">
 
 <div class="app-header">
     <h1>Půjčovna vybavení</h1>
     <p>Spolehlivé stroje pro vaši stavbu i zahradu</p>
 </div>
 
-<form id="poptavka-form">
+<form id="poptavka-form" onsubmit="event.preventDefault(); sendOrderToAdmin();">
 
 <div class="card">
     <div class="type-switch">
@@ -308,15 +331,10 @@ footer {
     </label>
 </div>
 
-<div class="submit-buttons-container">
-    <button type="button" class="btn btn-whatsapp" onclick="sendOrder('whatsapp')">
-        💬 Odeslat závaznou poptávku přes WhatsApp
-    </button>
-    <button type="button" class="btn btn-email" onclick="sendOrder('email')">
-        ✉️ Odeslat závaznou poptávku přes E-mail
-    </button>
-    <button type="button" class="btn btn-facebook" onclick="sendOrder('facebook')">
-        📘 Odeslat / Sdílet přes Facebook
+<!-- JEDINÉ TLAČÍTKO PRO ODESLÁNÍ DO ADMINISTRACE -->
+<div style="margin-top: 20px;">
+    <button type="submit" class="btn" style="background-color: var(--success); box-shadow: 0 8px 20px rgba(22, 163, 74, 0.25);">
+        🚀 Odeslat závaznou objednávku do administrace
     </button>
 </div>
 
@@ -362,19 +380,32 @@ footer {
     </div>
 </div>
 
-<!-- Modální okno pro potvrzení a poděkování -->
-<div class="modal-overlay" id="successModal">
-    <div class="success-modal-content">
-        <div class="success-icon">🎉</div>
-        <div class="success-title">Děkujeme za vaši poptávku!</div>
-        <div class="success-desc" id="success-desc-text">
-            Vaše poptávka byla úspěšně připravena k odeslání. Brzy se vám ozveme zpět.
-        </div>
-        <button type="button" class="btn" onclick="closeSuccessModal()">Rozumím, zpět na web</button>
-    </div>
-</div>
-
 <script>
+// --- FUNKCE PRO OVĚŘENÍ HESLA ---
+function verifyAppPassword() {
+    const inputVal = document.getElementById("login-password-input").value;
+    
+    // TADY SI ZMĚŇ SVÉ HESLO PRO OTEVŘENÍ STRÁNKY
+    const correctPassword = "1234"; 
+
+    if (inputVal === correctPassword) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app-wrapper").style.display = "flex";
+        sessionStorage.setItem("pujcovna_app_unlocked", "true");
+    } else {
+        document.getElementById("login-error").style.display = "block";
+    }
+}
+
+// Kontrola při načtení stránky, zda už byla odemčena
+window.addEventListener("DOMContentLoaded", () => {
+    if (sessionStorage.getItem("pujcovna_app_unlocked") === "true") {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app-wrapper").style.display = "flex";
+    }
+});
+
+// Původní logika aplikace
 const defaultProducts = [
     { id: 1, name: "AKU VRTAČKA", price: 300, deposit: 3000, stock: 5, img: "vrtacka.png", desc: "Výkonná AKU vrtačka vhodná pro veškeré vrtací a šroubovací práce." },
     { id: 2, name: "MOTOROVÁ PILA", price: 350, deposit: 3000, stock: 3, img: "motorova-pila.png", desc: "Spolehlivá řetězová pila pro kácení stromů a tesařské práce." },
@@ -397,6 +428,7 @@ let currentQty = 1;
 let cart = [];
 let modalTargetId = null;
 
+// Spuštění po odemčení nebo načtení
 document.addEventListener("DOMContentLoaded", () => {
     renderProductSelection();
     if(products.length > 0) selectProduct(products[0].id);
@@ -646,83 +678,61 @@ function selectFromModal() {
     }
 }
 
-function validateAndBuildOrderText() {
+function sendOrderToAdmin() {
     if (!cart.length) {
         alert("Přidejte prosím alespoň jednu položku do poptávky!");
-        return null;
+        return;
     }
 
     const isFirma = document.getElementById("btn-firma").classList.contains("active");
-    let zadavatelInfo = "";
+    let customerName = "";
+    let customerAddress = "";
 
     if (isFirma) {
-        const n = document.getElementById("input-firma-nazev").value.trim();
-        const a = document.getElementById("input-firma-sidlo").value.trim();
-        if (!n) { alert("Vyplňte prosím název firmy!"); return null; }
-        zadavatelInfo = `Firma: ${n}\nSídlo: ${a}`;
+        customerName = document.getElementById("input-firma-nazev").value.trim();
+        customerAddress = document.getElementById("input-firma-sidlo").value.trim();
+        if (!customerName) { alert("Vyplňte prosím název firmy!"); return; }
     } else {
-        const j = document.getElementById("jmeno_obcan").value.trim();
-        const a = document.getElementById("adresa_obcan").value.trim();
-        if (!j || !a) { alert("Vyplňte prosím jméno a doručovací adresu!"); return null; }
-        zadavatelInfo = `Zákazník (občan): ${j}\nAdresa: ${a}`;
+        customerName = document.getElementById("jmeno_obcan").value.trim();
+        customerAddress = document.getElementById("adresa_obcan").value.trim();
+        if (!customerName || !customerAddress) { alert("Vyplňte prosím jméno a doručovací adresu!"); return; }
     }
 
     const tel = document.getElementById("telefon").value.trim();
     const email = document.getElementById("email_klienta").value.trim();
     if (!tel || !email) {
         alert("Vyplňte prosím kontaktní telefon a e-mail!");
-        return null;
+        return;
     }
 
     const souhlas1 = document.getElementById("souhlas1").checked;
     const souhlas2 = document.getElementById("souhlas2").checked;
     if (!souhlas1 || !souhlas2) {
         alert("Pro odeslání poptávky musíte souhlasit se smluvními podmínkami a ochranou osobních údajů.");
-        return null;
+        return;
     }
 
-    const polozkySeznam = cart.map(c => `• ${c.name} × ${c.qty} ks — ${c.days} dní (${c.total} Kč)`).join("\n");
+    const newOrder = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        type: isFirma ? "Firma" : "Občan",
+        customerName: customerName,
+        customerAddress: customerAddress,
+        phone: tel,
+        email: email,
+        items: cart
+    };
 
-    return (
-        `Nová závazná poptávka z webu:\n\n` +
-        `--- Položky ---\n` +
-        `${polozkySeznam}\n\n` +
-        `--- Údaje zákazníka ---\n` +
-        `${zadavatelInfo}\n` +
-        `Telefon: ${tel}\n` +
-        `E-mail: ${email}`
-    );
-}
+    let orders = JSON.parse(localStorage.getItem('pujcovna_orders')) || [];
+    orders.push(newOrder);
+    localStorage.setItem('pujcovna_orders', JSON.stringify(orders));
 
-function sendOrder(platform) {
-    const textZpravy = validateAndBuildOrderText();
-    if (!textZpravy) return;
-
-    if (platform === 'whatsapp') {
-        const phoneNum = (localStorage.getItem('pujcovna_admin_phone') || '+420123456789').replace(/[^0-9+]/g, '');
-        window.open(`https://wa.me/${phoneNum}?text=${encodeURIComponent(textZpravy)}`, '_blank');
-    } else if (platform === 'email') {
-        const emailAddr = localStorage.getItem('pujcovna_admin_email') || 'info@pujcovna.cz';
-        window.location.href = `mailto:${emailAddr}?subject=${encodeURIComponent("Nová poptávka z webu")}&body=${encodeURIComponent(textZpravy)}`;
-    } else if (platform === 'facebook') {
-        if (navigator.share) {
-            navigator.share({ title: 'Poptávka', text: textZpravy }).catch(() => {});
-        } else {
-            navigator.clipboard.writeText(textZpravy);
-            alert("Poptávka byla zkopírována do schránky.");
-        }
-    }
-
-    document.getElementById("successModal").style.display = "flex";
-}
-
-function closeSuccessModal() {
-    document.getElementById("successModal").style.display = "none";
+    alert("Objednávka byla úspěšně odeslána do administrace!");
+    
     cart = [];
     renderCart();
     renderProductSelection();
     document.getElementById("poptavka-form").reset();
-    if(products.length > 0) selectProduct(products[0].id);
 }
 </script>
 </body>
